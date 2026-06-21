@@ -39,8 +39,18 @@ export const findUserFromGoogleId = async (googleId: string): Promise<User | nul
  * @param {User} userData - data to use to create the user [fistName, lastName, email, password, googleId, avatarUrl, emailVerified, emailVerifiedAt, active]
  * @returns {User}
  */
-export const addUser = async (userData: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User> => {
-  const [addedUser] = await db.insert(user).values(userData).returning();
+export const addUser = async (
+  firstName: string,
+  lastName: string,
+  email: string,
+  password: string,
+  googleId: string | null = null,
+  avatarUrl: string | null = null,
+): Promise<User> => {
+  const [addedUser] = await db
+    .insert(user)
+    .values({ firstName, lastName, email, password, googleId, avatarUrl, emailVerified: false, active: true })
+    .returning();
 
   return addedUser;
 };

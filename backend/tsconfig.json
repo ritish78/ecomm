@@ -5,7 +5,7 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false, //in loginController, when we do next(error) in catch block, TS thinks that we are not returning anything so, setting this to false.
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "module": "NodeNext",
