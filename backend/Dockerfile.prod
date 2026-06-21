@@ -1,0 +1,36 @@
+FROM node:26-alpine AS builder
+
+RUN npm install -g pnpm@10.33.2
+
+WORKDIR /home/ecomm/backend
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+RUN pnpm build
+
+#Now, for the final build
+FROM node:26-alpine
+
+RUN npm install -g pnpm@10.33.2
+
+WORKDIR /home/ecomm/backend
+
+#The user name is set as rajeshhamal, even though I am not Rajesh Hamal. 
+#Used it instead of John Doe or something similar default
+RUN addgroup -S ecommappgroup && adduser -S rajeshhamal -G ecommappgroup
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile --prod
+
+COPY --from=builder /home/ecomm/backend/dist ./dist
+
+RUN chown -R rajeshhamal:ecommappgroup /home/ecomm/backend
+
+USER rajeshhamal
+
+CMD ["node", "dist/src/index.js"]

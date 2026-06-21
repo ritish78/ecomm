@@ -1,0 +1,25 @@
+services:
+  ecommbackend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./backend/.env.prod
+    expose:
+      - 5000
+    command: node dist/index.js
+
+  ecommdatabase:
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    expose:
+      - 5432
+
+  ecommadminer:
+    ports:
+      - 127.0.0.1:8090:8080

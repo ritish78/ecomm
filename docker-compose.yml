@@ -1,0 +1,38 @@
+services:
+  ecommbackend:
+    container_name: ecommbackend
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    networks:
+      - ecommnetwork
+    depends_on:
+      - ecommdatabase
+
+  ecommdatabase:
+    container_name: ecommdatabase
+    image: postgres:18-alpine
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    volumes:
+      - ecommdata:/var/lib/postgresql
+    networks:
+      - ecommnetwork
+
+  ecommadminer:
+    container_name: ecommadminer
+    image: adminer:5.4.2
+    restart: unless-stopped
+    environment:
+      - ADMINER_DEFAULT_SERVER=ecommdatabase
+    networks:
+      - ecommnetwork
+    depends_on:
+      - ecommdatabase
+
+networks:
+  ecommnetwork:
+
+volumes:
+  ecommdata:
