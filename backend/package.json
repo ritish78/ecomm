@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --outDir dist",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "migrate:generate": "drizzle-kit generate",
+    "migrate:run": "tsx src/db/migrate.ts",
+    "migrate:push": "drizzle-kit push"
   },
   "keywords": [
     "ecommerce",
@@ -24,13 +27,20 @@
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.0.0",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0",
     "zod": "^4.4.3"
   }
 }

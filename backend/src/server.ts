@@ -1,8 +1,8 @@
-import express from "express";
+import express, { Request, Response } from "express";
 
 const app = express();
 
-app.get("/api/v1/ping", (req, res) => {
+app.get("/api/v1/ping", (req: Request, res: Response) => {
   return res.status(200).json({ message: "Pong!" });
 });
 
