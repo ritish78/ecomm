@@ -7,10 +7,10 @@ services:
     networks:
       - ecommnetwork
     depends_on:
-      - ecommdatabase
+      - ecommpostgresdatabase
 
-  ecommdatabase:
-    container_name: ecommdatabase
+  ecommpostgresdatabase:
+    container_name: ecommpostgresdatabase
     image: postgres:18-alpine
     restart: unless-stopped
     ports:
@@ -25,11 +25,11 @@ services:
     image: adminer:5.4.2
     restart: unless-stopped
     environment:
-      - ADMINER_DEFAULT_SERVER=ecommdatabase
+      - ADMINER_DEFAULT_SERVER=ecommpostgresdatabase
     networks:
       - ecommnetwork
     depends_on:
-      - ecommdatabase
+      - ecommpostgresdatabase
 
 networks:
   ecommnetwork:

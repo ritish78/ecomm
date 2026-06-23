@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { LoginInput, loginSchema, RegisterInput, registerSchema } from "../schema/auth.schema";
-import { loginUserService, registerUserService } from "../services/auth.service";
+import { loginUserService, registerUserService, revokeRefreshTokenService } from "../services/auth.service";
 import { ACCESS_TOKEN_COOKIE_OPTIONS } from "../config";
 import { alreadyAuthenticated } from "../utils/alreadyAuthenticated";
 
@@ -33,8 +33,15 @@ export const loginController = async (req: Request, res: Response, next: NextFun
   }
 };
 
+/**
+ * @route           /api/v1/auth/register
+ * @method          POST
+ * @desc            Register user with email and password
+ * @access          Public
+ */
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    //calling the same function as loginController to check if the user is already logged in
     if (await alreadyAuthenticated(req, res)) {
       return;
     }
@@ -56,4 +63,24 @@ export const registerController = async (req: Request, res: Response, next: Next
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * @route           /api/v1/auth/logout
+ * @method          POST
+ * @desc            Logout user by revoking the refresh token and clearing the cookies
+ * @access          Authenticated
+ */
+export const logoutController = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (refreshToken) {
+    await revokeRefreshTokenService(refreshToken);
+  }
+
+  //Clear the access and refresh tokens from cookies
+  res.clearCookie("accessToken", ACCESS_TOKEN_COOKIE_OPTIONS);
+  res.clearCookie("refreshToken", ACCESS_TOKEN_COOKIE_OPTIONS);
+
+  return res.status(200).send({ message: "Logout successful!" });
 };
