@@ -140,6 +140,10 @@ export const refreshAccessTokenService = async (
   };
 };
 
+/**
+ * @param {string} refreshToken - refreshToken provided by the user to revoke
+ * @returns {Promise<void>}
+ */
 export const revokeRefreshTokenService = async (refreshToken: string): Promise<void> => {
   let payload: { user: { id: string; firstName: string } };
 
