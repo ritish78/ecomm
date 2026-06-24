@@ -1,0 +1,11 @@
+FROM node:26-alpine
+
+RUN npm install -g pnpm@10.33.2
+
+WORKDIR /home/ecomm/frontend
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+
+COPY . .

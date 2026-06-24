@@ -1,0 +1,36 @@
+FROM node:26-alpine AS builder
+
+RUN npm install -g pnpm@10.33.2
+
+WORKDIR /home/ecomm/frontend
+
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+RUN pnpm build
+
+#Now, for the final build
+FROM node:26-alpine
+
+RUN pnpm install -g pnpm@10.33.2
+
+WORKDIR /home/ecomm/frontend
+
+RUN addgroup -S ecommappgroup && adduser -S rajeshhamal -G ecommappgroup
+
+COPY --from=builder /home/ecomm/frontend/.next/standalone ./
+COPY --from=builder /home/ecomm/frontend/.next/static ./.next/static
+COPY --from=builder /home/ecomm/frontend/public ./public
+
+RUN chown -R rajeshhamal:ecommappgroup /home/ecomm/frontend
+
+USER rajeshhamal
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+CMD [ "node", "server.js" ]
