@@ -13,6 +13,22 @@ services:
       - /home/ecomm/backend/node_modules
     command: pnpm run dev
 
+  ecommfrontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - ./frontend/.env.development
+    volumes:
+      - ./frontend:/home/ecomm/frontend
+      - /home/ecomm/frontend/node_modules
+      - /home/ecomm/frontend/.next
+    command: pnpm run dev
+
   ecommpostgresdatabase:
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}

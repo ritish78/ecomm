@@ -9,6 +9,14 @@ services:
     depends_on:
       - ecommpostgresdatabase
 
+  ecommfrontend:
+    container_name: ecommfrontend
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    networks:
+      - ecommnetwork
+
   ecommpostgresdatabase:
     container_name: ecommpostgresdatabase
     image: postgres:18-alpine

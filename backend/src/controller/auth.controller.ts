@@ -1,12 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import { LoginInput, loginSchema, RegisterInput, registerSchema } from "../schema/auth.schema";
+import {
+  googleAuthSchema,
+  LoginInput,
+  loginSchema,
+  RegisterInput,
+  registerSchema,
+} from "../schema/auth.schema";
 import {
   loginUserService,
+  loginWithGoogle,
   refreshAccessTokenService,
   registerUserService,
   revokeRefreshTokenService,
 } from "../services/auth.service";
-import { ACCESS_TOKEN_COOKIE_OPTIONS } from "../config";
+import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
 import { alreadyAuthenticated } from "../utils/alreadyAuthenticated";
 import { AuthError } from "../utils/error";
 
@@ -99,7 +106,7 @@ export const logoutController = async (req: Request, res: Response, next: NextFu
  * @route           /api/v1/auth/refresh
  * @method          POST
  * @description     Refresh access token using refresh token
- * @description     Authenticated
+ * @access          Authenticated
  */
 export const refreshAccessTokenController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -114,6 +121,27 @@ export const refreshAccessTokenController = async (req: Request, res: Response, 
     res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
 
     res.status(200).send({ message: "Access token token refreshed!", user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route             /api/v1/auth/google
+ * @method            POST
+ * @description       Login using Google instead of email and password
+ * @access            Public
+ */
+export const loginUserUsingGoogleController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { idToken } = googleAuthSchema.parse(req.body);
+
+    const { accessToken, refreshToken, user } = await loginWithGoogle(idToken);
+
+    res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+
+    res.status(200).send({ message: "Login using Google successful!", user });
   } catch (error) {
     next(error);
   }

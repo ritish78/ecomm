@@ -43,13 +43,14 @@ export const addUser = async (
   firstName: string,
   lastName: string,
   email: string,
-  password: string,
+  password: string | null = null, //null if logging in using google
   googleId: string | null = null,
   avatarUrl: string | null = null,
+  emailVerified: boolean = false, //false by default. true if logging in using google
 ): Promise<User> => {
   const [addedUser] = await db
     .insert(user)
-    .values({ firstName, lastName, email, password, googleId, avatarUrl, emailVerified: false, active: true })
+    .values({ firstName, lastName, email, password, googleId, avatarUrl, emailVerified, active: true })
     .returning();
 
   return addedUser;
@@ -110,4 +111,19 @@ export const getActiveRefreshTokensOfUser = async (userId: string): Promise<Refr
  */
 export const revokeRefreshToken = async (tokenId: number): Promise<void> => {
   await db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.id, tokenId));
+};
+
+export const linkGoogleId = async (userId: string, googleId: string, email: string, avatarUrl?: string) => {
+  const [linkedUser] = await db
+    .update(user)
+    .set({
+      email,
+      googleId,
+      avatarUrl,
+      emailVerified: true,
+    })
+    .where(eq(user.id, userId))
+    .returning();
+
+  return linkedUser;
 };

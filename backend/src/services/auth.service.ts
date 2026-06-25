@@ -1,13 +1,16 @@
 import {
   addUser,
   findUserByEmail,
+  findUserFromGoogleId,
   getActiveRefreshTokensOfUser,
   insertRefreshToken,
+  linkGoogleId,
   revokeRefreshToken,
 } from "../repository/auth.repository";
 import { RefreshToken } from "../types/refreshTokens.type";
 import { UserDTO } from "../types/user.types";
 import { AuthError, ConflictError } from "../utils/error";
+import { verifyGoogleIdToken } from "../utils/google";
 import hashPassword, { passwordMatches } from "../utils/hashPassword";
 import { generateAccessToken, generateJWT, verifyRefreshToken } from "../utils/jwt";
 import toUserDTO from "../utils/toUserDTO";
@@ -169,4 +172,45 @@ export const revokeRefreshTokenService = async (refreshToken: string): Promise<v
       return;
     }
   }
+};
+
+export const loginWithGoogle = async (idToken: string) => {
+  const userFromGoogle = await verifyGoogleIdToken(idToken);
+
+  let userFromDatabase = await findUserFromGoogleId(userFromGoogle.googleId);
+
+  //If the user has not created account and has clicked on Login using Google button
+  if (!userFromDatabase) {
+    //first, we check if the user of the provided email exists in our database.
+    const userFromEmail = await findUserByEmail(userFromGoogle.email);
+
+    if (userFromEmail) {
+      userFromDatabase = await linkGoogleId(
+        userFromEmail.id,
+        userFromGoogle.googleId,
+        userFromGoogle.email,
+        userFromGoogle.avatarUrl,
+      );
+    } else {
+      //if the user does not exists in out database, then we create a new account.
+      userFromDatabase = await addUser(
+        userFromGoogle.firstName,
+        userFromGoogle.lastName,
+        userFromGoogle.email,
+        null, //this field is password.
+        userFromGoogle.googleId,
+        userFromGoogle.avatarUrl,
+        true, //this field is emailVerified
+      );
+    }
+  }
+
+  const tokens = generateJWT(userFromDatabase.id, userFromDatabase.firstName);
+
+  await insertRefreshToken(userFromDatabase.id, tokens.refreshToken);
+
+  return {
+    ...tokens,
+    user: toUserDTO(userFromDatabase),
+  };
 };
