@@ -174,6 +174,10 @@ export const revokeRefreshTokenService = async (refreshToken: string): Promise<v
   }
 };
 
+/**
+ * @param {string} idToken - id token from google
+ * @returns {Promise<{accessToken, refreshToken, User}>}
+ */
 export const loginWithGoogle = async (idToken: string) => {
   const userFromGoogle = await verifyGoogleIdToken(idToken);
 
