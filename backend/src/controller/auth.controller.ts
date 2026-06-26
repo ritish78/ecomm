@@ -15,7 +15,9 @@ import {
 } from "../services/auth.service";
 import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
 import { alreadyAuthenticated } from "../utils/alreadyAuthenticated";
-import { AuthError } from "../utils/error";
+import { AuthError, NotFoundError } from "../utils/error";
+import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
+import { findUserById } from "../repository/auth.repository";
 
 /**
  * @route           /api/v1/auth/login
@@ -142,6 +144,34 @@ export const loginUserUsingGoogleController = async (req: Request, res: Response
     res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
     res.status(200).send({ message: "Login using Google successful!", user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route             /api/v1/auth/me
+ * @method            GET
+ * @description       Get the details of the currently logged in user
+ * @access            Authenticated 
+ */
+export const getCurrentUserController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const accessToken = req.cookies?.accessToken;
+
+    if (!accessToken) {
+      throw new AuthError("You need to be logged in! Login first!");
+    }
+
+    const payload = verifyAccessToken(accessToken);
+
+    const user = await findUserById(payload.user.id);
+
+    if (!user) {
+      throw new NotFoundError("User of the provided access token not found!");
+    }
+
+    res.status(200).send({ message: "Your details!", user });
   } catch (error) {
     next(error);
   }

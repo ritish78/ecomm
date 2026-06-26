@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthRestorer from "@/components/AuthRestorer";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +34,11 @@ export default function RootLayout({
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
       />
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthRestorer />
+        <SiteHeader />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }

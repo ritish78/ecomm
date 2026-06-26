@@ -1,6 +1,17 @@
+import {
+  ArrowDownIcon,
+  CaretUpIcon,
+  ChevronDownIcon,
+  ExitIcon,
+} from "@radix-ui/react-icons";
+
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
+  // downArrow: ArrowDownIcon,
+  downArrow: ChevronDownIcon,
+  cart: CaretUpIcon,
+  logout: ExitIcon,
   google: (props: IconProps) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,6 +36,37 @@ export const Icons = {
       <path
         fill="#1976D2"
         d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+      ></path>
+    </svg>
+  ),
+  menu: ({ ...props }: IconProps) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      strokeWidth="1.5"
+      {...props}
+    >
+      <path
+        d="M3 5H11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      ></path>
+      <path
+        d="M3 12H16"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      ></path>
+      <path
+        d="M3 19H21"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       ></path>
     </svg>
   ),
