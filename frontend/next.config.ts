@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
+    minimumCacheTTL: 1 * 60 * 60,
+  },
 };
 
 export default nextConfig;

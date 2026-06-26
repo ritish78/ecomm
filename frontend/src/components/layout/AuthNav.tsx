@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { Icons } from "../ui/Icons";
+import Image from "next/image";
+import Button from "../ui/Button";
 
 export function AuthNav() {
   const pathname = usePathname();
@@ -44,11 +46,12 @@ export function AuthNav() {
       <button className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
         <div className="h-8 w-8 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center overflow-hidden">
           {user.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={user.avatarUrl}
               alt={user.firstName}
-              className="h-full w-full object-cover"
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
             />
           ) : (
             getInitials(user.firstName, user.lastName)
@@ -76,14 +79,14 @@ export function AuthNav() {
           <Icons.cart className="h-4 w-4" />
           My Orders
         </Link>
-
-        <button
+        <Button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          variant="destructive"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm justify-start"
         >
           <Icons.logout className="h-4 w-4" />
           Log out
-        </button>
+        </Button>
       </div>
     </div>
   );
