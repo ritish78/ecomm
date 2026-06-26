@@ -30,6 +30,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      {/* I am using GSI widget to sign in. It sometimes throws this error
+      [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token.
+      Instead of having a small widget in our website, where user can login, we will
+      move to redirecting the user to google's page for them to login and the google
+      will redirect the user with token what we will use in our callback function that
+      logins in the user. */}
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
