@@ -1,14 +1,8 @@
-import {
-  ArrowDownIcon,
-  CaretUpIcon,
-  ChevronDownIcon,
-  ExitIcon,
-} from "@radix-ui/react-icons";
+import { CaretUpIcon, ChevronDownIcon, ExitIcon } from "@radix-ui/react-icons";
 
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
-  // downArrow: ArrowDownIcon,
   downArrow: ChevronDownIcon,
   cart: CaretUpIcon,
   logout: ExitIcon,

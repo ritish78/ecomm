@@ -136,9 +136,11 @@ export const refreshAccessTokenController = async (req: Request, res: Response, 
  */
 export const loginUserUsingGoogleController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { idToken } = googleAuthSchema.parse(req.body);
+    const { code } = googleAuthSchema.parse(req.body);
 
-    const { accessToken, refreshToken, user } = await loginWithGoogle(idToken);
+    const { accessToken, refreshToken, user } = await loginWithGoogle(code);
+    console.log("accessToken", accessToken.length);
+    console.log("refreshToken", refreshToken.length);
 
     res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
     res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);

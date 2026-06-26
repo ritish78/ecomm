@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthRestorer from "@/components/AuthRestorer";
@@ -36,10 +35,10 @@ export default function RootLayout({
       move to redirecting the user to google's page for them to login and the google
       will redirect the user with token what we will use in our callback function that
       logins in the user. */}
-      <Script
+      {/* <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
-      />
+      /> */}
       <body className="min-h-full flex flex-col">
         <AuthRestorer />
         <SiteHeader />

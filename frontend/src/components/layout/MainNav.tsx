@@ -39,7 +39,6 @@ export function MainNav({ items }: Props) {
             />
           </button>
 
-          {/* Dropdown */}
           {openMenu === group.title && (
             <div className="absolute top-full left-0 mt-1 w-56 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg py-1 z-50">
               {group.items.map((item) => (

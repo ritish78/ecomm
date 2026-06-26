@@ -24,7 +24,6 @@ export function MobileNav({ items }: Props) {
         <Icons.menu className="h-5 w-5" />
       </button>
 
-      {/* Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
@@ -32,7 +31,6 @@ export function MobileNav({ items }: Props) {
         />
       )}
 
-      {/* Drawer */}
       <div
         className={cn(
           "fixed top-0 right-0 z-50 h-full w-72 bg-white dark:bg-slate-900 shadow-xl",
@@ -40,10 +38,9 @@ export function MobileNav({ items }: Props) {
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
           <span className="font-bold text-emerald-600 dark:text-emerald-400">
-            🍃 FreshBite
+            Ecomm
           </span>
           <button
             onClick={() => setIsOpen(false)}
@@ -54,7 +51,6 @@ export function MobileNav({ items }: Props) {
           </button>
         </div>
 
-        {/* Nav items */}
         <nav className="p-3 overflow-y-auto h-[calc(100%-64px)]">
           {items.map((group) => (
             <div key={group.title} className="mb-1">

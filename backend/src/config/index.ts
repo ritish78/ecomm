@@ -5,6 +5,7 @@ export const POSTGRES_DATA_URL = process.env.POSTGRES_DATA_URL;
 export const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 const COOKIE_OPTIONS = {
   httpOnly: true,

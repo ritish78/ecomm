@@ -6,6 +6,8 @@ export function useRestoreAuth() {
 
   useEffect(() => {
     const restore = async () => {
+      //TODO: might need to optimize our current implementation again. Looking at the console in browser,
+      //we are fetching /api/v1/auth/me and /api/v1/auth/refresh again and again
       try {
         const meResponse = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/v1/auth/me`,

@@ -10,7 +10,7 @@ import {
 import { RefreshToken } from "../types/refreshTokens.type";
 import { UserDTO } from "../types/user.types";
 import { AuthError, ConflictError } from "../utils/error";
-import { verifyGoogleIdToken } from "../utils/google";
+import { exchangeGoogleCode } from "../utils/google";
 import hashPassword, { passwordMatches } from "../utils/hashPassword";
 import { generateAccessToken, generateJWT, verifyRefreshToken } from "../utils/jwt";
 import toUserDTO from "../utils/toUserDTO";
@@ -175,11 +175,11 @@ export const revokeRefreshTokenService = async (refreshToken: string): Promise<v
 };
 
 /**
- * @param {string} idToken - id token from google
+ * @param {string} code -  token from google
  * @returns {Promise<{accessToken, refreshToken, User}>}
  */
-export const loginWithGoogle = async (idToken: string) => {
-  const userFromGoogle = await verifyGoogleIdToken(idToken);
+export const loginWithGoogle = async (code: string) => {
+  const userFromGoogle = await exchangeGoogleCode(code);
 
   let userFromDatabase = await findUserFromGoogleId(userFromGoogle.googleId);
 

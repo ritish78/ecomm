@@ -1,11 +1,25 @@
 import { OAuth2Client } from "google-auth-library";
-import { GOOGLE_CLIENT_ID } from "../config";
+import { FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../config";
 import { AuthError } from "./error";
 
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  `${FRONTEND_URL}/google/callback`, //i have /google/callback in google's console as redirect
+);
 
-export async function verifyGoogleIdToken(idToken: string) {
-  const ticket = await client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID });
+export async function exchangeGoogleCode(code: string) {
+  const { tokens } = await client.getToken(code);
+
+  if (!tokens.id_token) {
+    throw new AuthError("Did not receive any token back from Google!");
+  }
+
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
   const payload = ticket.getPayload();
 
   if (!payload) {
