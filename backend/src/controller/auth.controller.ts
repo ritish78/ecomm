@@ -41,7 +41,7 @@ export const loginController = async (req: Request, res: Response, next: NextFun
     const { accessToken, refreshToken, user } = await loginUserService(loginInput.email, loginInput.password);
 
     res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.cookie("refreshToken", refreshToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
 
     return res.status(200).send({ message: "Login successful!", user });
   } catch (error) {
