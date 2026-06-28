@@ -7,13 +7,14 @@ import {
   refreshAccessTokenController,
   registerController,
 } from "../controller/auth.controller";
+import { authenticate } from "../middleware/authenticate";
 
 const router = Router();
 
 router.post("/login", loginController);
 router.post("/register", registerController);
-router.post("/refresh", refreshAccessTokenController);//need to implement authenticate middleware and run it before refreshAccessTokenController
-router.get("/me", getCurrentUserController);//need to implement authenticate middleware
+router.post("/refresh", refreshAccessTokenController);
+router.get("/me", authenticate, getCurrentUserController);
 router.post("/logout", logoutController);
 router.post("/google", loginUserUsingGoogleController);
 

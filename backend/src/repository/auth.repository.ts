@@ -1,6 +1,6 @@
 import { and, eq, gte } from "drizzle-orm";
 import db from "../db";
-import { User, user } from "../models/user.model";
+import { User, user } from "../models/users.model";
 import { refreshTokens } from "../models/resfreshTokens.model";
 import hashPassword from "../utils/hashPassword";
 import { RefreshToken } from "../types/refreshTokens.type";

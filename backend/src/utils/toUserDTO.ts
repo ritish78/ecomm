@@ -1,4 +1,4 @@
-import { User } from "../models/user.model";
+import { User } from "../models/users.model";
 
 const toUserDTO = (user: User) => {
   return {
