@@ -1,6 +1,7 @@
 import {
   addUser,
   findUserByEmail,
+  findUserById,
   findUserFromGoogleId,
   getActiveRefreshTokensOfUser,
   insertRefreshToken,
@@ -9,7 +10,7 @@ import {
 } from "../repository/auth.repository";
 import { RefreshToken } from "../types/refreshTokens.type";
 import { UserDTO } from "../types/user.types";
-import { AuthError, ConflictError } from "../utils/error";
+import { AuthError, ConflictError, NotFoundError } from "../utils/error";
 import { exchangeGoogleCode } from "../utils/google";
 import hashPassword, { passwordMatches } from "../utils/hashPassword";
 import { generateAccessToken, generateJWT, verifyRefreshToken } from "../utils/jwt";
@@ -108,6 +109,10 @@ export const refreshAccessTokenService = async (
     throw new AuthError("Invalid or expired refresh token!");
   }
 
+console.log("User id:", payload.user.id);
+console.log("User id:", payload.user.id);
+console.log("User id:", payload.user.id);
+
   //We need to check if the refreshToken provided by the user exists
   //and hasn't expired or revoked
   const userTokens = await getActiveRefreshTokensOfUser(payload.user.id);
@@ -131,7 +136,7 @@ export const refreshAccessTokenService = async (
 
   //After confirming that token exists and token has not been revoked or expired
   //we then check if the user exists
-  const userFromDatabase = await findUserByEmail(payload.user.id);
+  const userFromDatabase = await findUserById(payload.user.id);
 
   if (!userFromDatabase || !userFromDatabase.active || !userFromDatabase.emailVerified) {
     throw new AuthError("User not found!");
@@ -178,7 +183,7 @@ export const revokeRefreshTokenService = async (refreshToken: string): Promise<v
  * @param {string} code -  token from google
  * @returns {Promise<{accessToken, refreshToken, User}>}
  */
-export const loginWithGoogle = async (code: string) => {
+export const loginWithGoogleService = async (code: string) => {
   const userFromGoogle = await exchangeGoogleCode(code);
 
   let userFromDatabase = await findUserFromGoogleId(userFromGoogle.googleId);
@@ -218,3 +223,17 @@ export const loginWithGoogle = async (code: string) => {
     user: toUserDTO(userFromDatabase),
   };
 };
+
+/**
+ * @param {string} userId - id of the user to get the details
+ * @returns {Promise<UserDTO>}
+ */
+export const getCurrentUserService = async (userId: string): Promise<UserDTO> => {
+  const userFromDatabase = await findUserById(userId);
+
+  if (!userFromDatabase) {
+    throw new NotFoundError("User of the provided access token not found!");
+  }
+
+  return toUserDTO(userFromDatabase);
+}

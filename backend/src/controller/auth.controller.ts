@@ -7,17 +7,18 @@ import {
   registerSchema,
 } from "../schema/auth.schema";
 import {
+  getCurrentUserService,
   loginUserService,
-  loginWithGoogle,
+  loginWithGoogleService,
   refreshAccessTokenService,
   registerUserService,
   revokeRefreshTokenService,
 } from "../services/auth.service";
 import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from "../config";
 import { alreadyAuthenticated } from "../utils/alreadyAuthenticated";
-import { AuthError, NotFoundError } from "../utils/error";
-import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
-import { findUserById } from "../repository/auth.repository";
+import { AuthError } from "../utils/error";
+import { verifyAccessToken } from "../utils/jwt";
+
 
 /**
  * @route           /api/v1/auth/login
@@ -138,7 +139,7 @@ export const loginUserUsingGoogleController = async (req: Request, res: Response
   try {
     const { code } = googleAuthSchema.parse(req.body);
 
-    const { accessToken, refreshToken, user } = await loginWithGoogle(code);
+    const { accessToken, refreshToken, user } = await loginWithGoogleService(code);
     console.log("accessToken", accessToken.length);
     console.log("refreshToken", refreshToken.length);
 
@@ -167,11 +168,7 @@ export const getCurrentUserController = async (req: Request, res: Response, next
 
     const payload = verifyAccessToken(accessToken);
 
-    const user = await findUserById(payload.user.id);
-
-    if (!user) {
-      throw new NotFoundError("User of the provided access token not found!");
-    }
+    const user = await getCurrentUserService(payload.user.id);
 
     res.status(200).send({ message: "Your details!", user });
   } catch (error) {
