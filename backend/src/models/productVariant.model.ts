@@ -14,8 +14,8 @@ import { products } from "./products.model.js";
 
 export const unitEnum = pgEnum("unit", ["g", "kg", "ml", "l", "pc"]);
 
-export const productVariant = pgTable(
-  "product_variant",
+export const productVariants = pgTable(
+  "product_variants",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     productId: uuid("product_id")
@@ -36,4 +36,4 @@ export const productVariant = pgTable(
   ],
 );
 
-export type ProductVariant = InferSelectModel<typeof productVariant>;
+export type ProductVariant = InferSelectModel<typeof productVariants>;

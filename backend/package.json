@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "migrate:generate": "drizzle-kit generate",
     "migrate:run": "tsx src/db/migrate.ts",
-    "migrate:push": "drizzle-kit push"
+    "migrate:push": "drizzle-kit push",
+    "seed": "tsx seed.ts"
   },
   "keywords": [
     "ecommerce",

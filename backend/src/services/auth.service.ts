@@ -109,10 +109,6 @@ export const refreshAccessTokenService = async (
     throw new AuthError("Invalid or expired refresh token!");
   }
 
-console.log("User id:", payload.user.id);
-console.log("User id:", payload.user.id);
-console.log("User id:", payload.user.id);
-
   //We need to check if the refreshToken provided by the user exists
   //and hasn't expired or revoked
   const userTokens = await getActiveRefreshTokensOfUser(payload.user.id);
