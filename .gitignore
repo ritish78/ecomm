@@ -1,6 +1,8 @@
 node_modules
+.env
 .env.development
 .env.production
+!.env.example
 dist
 drizzle
 seed.ts
