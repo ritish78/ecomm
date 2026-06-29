@@ -1,0 +1,30 @@
+import { uuid } from "drizzle-orm/pg-core";
+import { pgTable } from "drizzle-orm/pg-core";
+import { products } from "./products.model";
+import { varchar } from "drizzle-orm/pg-core";
+import { text } from "drizzle-orm/pg-core";
+import { timestamp } from "drizzle-orm/pg-core";
+import { index } from "drizzle-orm/pg-core";
+
+export const productHistory = pgTable(
+  "product_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id),
+    name: varchar("name", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
+    description: text("description"),
+    brandId: uuid("brand_id"), //we are not referencing id of brand because brand might not exists later and we need to display its history
+    brandName: varchar("brand_name", { length: 100 }),
+    categoryId: uuid("category_id"), //same for the category. but category might not get deleted, they might be separated into different or joined
+    categoryName: varchar("category_name", { length: 100 }),
+    changed_at: timestamp("changed_at").defaultNow(),
+    changed_by: uuid("changed_by"),
+  },
+  (table) => [
+    index("product_id_history_index").on(table.productId),
+    index("product_slug_history_index").on(table.slug),
+  ],
+);

@@ -1,8 +1,10 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import db from "../db";
 import { products } from "../models/products.model";
 import { brands } from "../models/brands.model";
 import { categories } from "../models/categories.model";
+import { productImages } from "../models/productImages.model";
+import { productVariants } from "../models/productVariant.model";
 
 export const findProductById = async (productId: string) => {
   const [productFromDatabase] = await db.select().from(products).where(eq(products.id, productId));
@@ -84,7 +86,36 @@ export const findProductWithDetailsById = async (productId: string) => {
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .where(eq(products.id, productId));
 
-  //for now, have only implemented fetching product from products, brands and categories table
+  //exiting early if there is no product of provided id
+  if (!productRow) {
+    return null;
+  }
 
-  return productRow;
-};
+  const productImagesQuery = db
+    .select()
+    .from(productImages)
+    .where(eq(productImages.productId, productId))
+    .orderBy(asc(productImages.displayOrder));
+
+  const productsVariantsQuery = db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId));
+
+  //after getting the products, we are querying the images and variants table in a Promise.all
+  //statement. We could also query the products same way which we are querying images and variants
+  //and we would have the max time of (max of products/images/variants) but we have implemented
+  //products + max of images/variants. we expect to get more hits on products that does not exists
+  //than products that does exists. Saw that bots account for more than 50% of traffic world wide.
+  //we could change to query all in one go in the future if we see that users are more likely to
+  //search for products that does exists.
+  //and these queries are not the same that I wanted to implement that I wrote commented out many
+  //lines above. This works well with Drizzle ORM.
+  const [images, variants] = await Promise.all([productImagesQuery, productsVariantsQuery]);
+
+  return {
+    ...productRow,
+    images,
+    variants,
+  };
+};;

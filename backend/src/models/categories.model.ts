@@ -1,5 +1,5 @@
 import { InferSelectModel } from "drizzle-orm";
-import { varchar, timestamp, uuid, pgTable, index } from "drizzle-orm/pg-core";
+import { uuid, varchar, timestamp, pgTable, index } from "drizzle-orm/pg-core";
 
 export const categories = pgTable(
   "categories",
