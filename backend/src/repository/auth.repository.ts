@@ -1,6 +1,6 @@
 import { and, eq, gte } from "drizzle-orm";
 import db from "../db";
-import { User, user } from "../models/users.model";
+import { User, users } from "../models/users.model";
 import { refreshTokens } from "../models/resfreshTokens.model";
 import hashPassword from "../utils/hashPassword";
 import { RefreshToken } from "../types/refreshTokens.type";
@@ -10,7 +10,7 @@ import { RefreshToken } from "../types/refreshTokens.type";
  * @returns {User | null}
  */
 export const findUserByEmail = async (email: string): Promise<User | null> => {
-  const [userFromDatabase] = await db.select().from(user).where(eq(user.email, email));
+  const [userFromDatabase] = await db.select().from(users).where(eq(users.email, email));
 
   return userFromDatabase;
 };
@@ -20,7 +20,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
  * @returns {User | null}
  */
 export const findUserById = async (userId: string): Promise<User | null> => {
-  const [userFromDatabase] = await db.select().from(user).where(eq(user.id, userId));
+  const [userFromDatabase] = await db.select().from(users).where(eq(users.id, userId));
 
   return userFromDatabase;
 };
@@ -30,7 +30,7 @@ export const findUserById = async (userId: string): Promise<User | null> => {
  * @returns {User | null}
  */
 export const findUserFromGoogleId = async (googleId: string): Promise<User | null> => {
-  const [userFromDatabase] = await db.select().from(user).where(eq(user.googleId, googleId));
+  const [userFromDatabase] = await db.select().from(users).where(eq(users.googleId, googleId));
 
   return userFromDatabase;
 };
@@ -49,7 +49,7 @@ export const addUser = async (
   emailVerified: boolean = false, //false by default. true if logging in using google
 ): Promise<User> => {
   const [addedUser] = await db
-    .insert(user)
+    .insert(users)
     .values({ firstName, lastName, email, password, googleId, avatarUrl, emailVerified, active: true })
     .returning();
 
@@ -67,9 +67,9 @@ export const linkGoogleAccountToExistingUser = async (
   avatarUrl?: string,
 ): Promise<User> => {
   const [updatedUser] = await db
-    .update(user)
+    .update(users)
     .set({ googleId, avatarUrl, updatedAt: new Date() })
-    .where(eq(user.id, userId))
+    .where(eq(users.id, userId))
     .returning();
 
   return updatedUser;
@@ -115,14 +115,14 @@ export const revokeRefreshToken = async (tokenId: number): Promise<void> => {
 
 export const linkGoogleId = async (userId: string, googleId: string, email: string, avatarUrl?: string) => {
   const [linkedUser] = await db
-    .update(user)
+    .update(users)
     .set({
       email,
       googleId,
       avatarUrl,
       emailVerified: true,
     })
-    .where(eq(user.id, userId))
+    .where(eq(users.id, userId))
     .returning();
 
   return linkedUser;

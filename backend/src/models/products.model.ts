@@ -8,7 +8,7 @@ export const products = pgTable(
   "products",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    sellerId: uuid("seller_id").references(() => users.id, { onDelete: "set null" }),
+    sellerId: uuid("seller_id").references(() => users.id, { onDelete: "restrict" }),
     name: varchar("name", { length: 255 }).notNull(),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     description: text("description"),
@@ -26,6 +26,7 @@ export const products = pgTable(
     index("product_slug_index").on(table.slug),
     index("product_brand_id_index").on(table.brandId),
     index("product_category_id_index").on(table.categoryId),
+    index("product_seller_id_index").on(table.sellerId),
   ],
 );
 

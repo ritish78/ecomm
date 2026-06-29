@@ -1,4 +1,4 @@
-import { findProductById, findProductWithDetailsById } from "../repository/product.repository";
+import { findProductById, findProductWithDetailsByIdOrSlug } from "../repository/product.repository";
 import { NotFoundError } from "../utils/error";
 
 export const getProductByIdService = async (productId: string) => {
@@ -11,11 +11,11 @@ export const getProductByIdService = async (productId: string) => {
   return product;
 };
 
-export const getProductWithDetailsByIdService = async (productId: string) => {
-  const product = await findProductWithDetailsById(productId);
+export const getProductWithDetailsByIdOrSlugService = async (productIdentifier: string) => {
+  const product = await findProductWithDetailsByIdOrSlug(productIdentifier);
 
   if (!product) {
-    throw new NotFoundError(`Product of id ${productId} not found!`);
+    throw new NotFoundError(`Product of id/slug ${productIdentifier} not found!`);
   }
 
   return product;

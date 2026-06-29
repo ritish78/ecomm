@@ -3,6 +3,6 @@ import { productByIdController } from "../controller/product.controller";
 
 const router = Router();
 
-router.get("/:id", productByIdController);
+router.get("/:identifier", productByIdController);
 
 export default router;
