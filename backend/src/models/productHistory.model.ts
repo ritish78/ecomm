@@ -1,10 +1,6 @@
-import { uuid } from "drizzle-orm/pg-core";
-import { pgTable } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, index } from "drizzle-orm/pg-core";
 import { products } from "./products.model";
-import { varchar } from "drizzle-orm/pg-core";
-import { text } from "drizzle-orm/pg-core";
-import { timestamp } from "drizzle-orm/pg-core";
-import { index } from "drizzle-orm/pg-core";
+import { InferSelectModel } from "drizzle-orm";
 
 export const productHistory = pgTable(
   "product_history",
@@ -28,3 +24,5 @@ export const productHistory = pgTable(
     index("product_slug_history_index").on(table.slug),
   ],
 );
+
+export type ProductHistory = InferSelectModel<typeof productHistory>;

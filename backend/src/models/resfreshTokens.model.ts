@@ -1,7 +1,6 @@
-import { uuid, serial, pgTable, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { uuid, serial, pgTable, varchar, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { users } from "./users.model";
-import { index } from "drizzle-orm/pg-core";
 
 export const refreshTokens = pgTable(
   "refresh_tokens",

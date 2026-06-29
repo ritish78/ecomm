@@ -1,13 +1,13 @@
 import { asc, eq } from "drizzle-orm";
 import db from "../db";
-import { products } from "../models/products.model";
+import { Product, products } from "../models/products.model";
 import { brands } from "../models/brands.model";
 import { categories } from "../models/categories.model";
 import { productImages } from "../models/productImages.model";
 import { productVariants } from "../models/productVariant.model";
 import isUuid from "../utils/isUUID";
 
-export const findProductById = async (productId: string) => {
+export const findProductById = async (productId: string): Promise<Product> => {
   const [productFromDatabase] = await db.select().from(products).where(eq(products.id, productId));
 
   return productFromDatabase;
@@ -75,7 +75,7 @@ export const findProductWithDetailsById = async (productId: string) => {
       description: products.description,
       isActive: products.isActive,
       createdAt: products.createdAt,
-      updatedAt: products.createdAt,
+      updatedAt: products.updatedAt,
       brand: {
         id: brands.id,
         name: brands.name,

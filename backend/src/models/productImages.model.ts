@@ -1,11 +1,5 @@
-import { uuid } from "drizzle-orm/pg-core";
-import { pgTable } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, integer, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { products } from "./products.model";
-import { varchar } from "drizzle-orm/pg-core";
-import { integer } from "drizzle-orm/pg-core";
-import { boolean } from "drizzle-orm/pg-core";
-import { timestamp } from "drizzle-orm/pg-core";
-import { index } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 
 export const productImages = pgTable(

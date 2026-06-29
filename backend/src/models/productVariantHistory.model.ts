@@ -1,6 +1,6 @@
-import { pgTable, uuid, numeric, integer, varchar, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, numeric, integer, varchar, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { productVariants, unitEnum } from "./productVariant.model";
-import { index } from "drizzle-orm/pg-core";
+import { InferSelectModel } from "drizzle-orm";
 
 export const productVariantHistory = pgTable(
   "product_variant_history",
@@ -24,3 +24,5 @@ export const productVariantHistory = pgTable(
     index("product_id_variant_id_history").on(table.productId),
   ],
 );
+
+export type ProductVariantHistory = InferSelectModel<typeof productVariantHistory>;
