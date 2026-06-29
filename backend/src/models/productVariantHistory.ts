@@ -17,7 +17,7 @@ export const productVariantHistory = pgTable(
     sku: varchar("sku", { length: 100 }).unique(),
     isAvailable: boolean("is_available").notNull(),
     changedAt: timestamp("changed_at").defaultNow(),
-    changedBy: timestamp("changed_by").defaultNow(),
+    changedBy: uuid("changed_by"),
   },
   (table) => [
     index("product_variant_id_history").on(table.productVariantId),

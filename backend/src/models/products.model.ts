@@ -2,11 +2,13 @@ import { InferSelectModel } from "drizzle-orm";
 import { varchar, timestamp, uuid, pgTable, index, boolean, text } from "drizzle-orm/pg-core";
 import { brands } from "./brands.model";
 import { categories } from "./categories.model";
+import { users } from "./users.model";
 
 export const products = pgTable(
   "products",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    sellerId: uuid("seller_id").references(() => users.id, { onDelete: "set null" }),
     name: varchar("name", { length: 255 }).notNull(),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     description: text("description"),
