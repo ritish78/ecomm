@@ -8,6 +8,7 @@ import { productVariants } from "../models/productVariant.model";
 import isUuid from "../utils/isUUID";
 import { FilterProductInput } from "../schema/product.schema";
 import { isMainThread } from "node:worker_threads";
+import toOrQuery from "../utils/toOrQuery";
 
 export const findProductById = async (productId: string): Promise<Product> => {
   const [productFromDatabase] = await db.select().from(products).where(eq(products.id, productId));
@@ -139,7 +140,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
       description: products.description,
       isActive: products.isActive,
       createdAt: products.createdAt,
-      updatedAt: products.createdAt,
+      updatedAt: products.updatedAt,
       brand: {
         id: brands.id,
         name: brands.name,
@@ -204,10 +205,12 @@ export const filterProducts = async (filters: FilterProductInput) => {
     conditions.push(eq(products.brandId, brandId));
   }
 
+  const orQueryKeyword = keyword ? toOrQuery(keyword) : undefined;
   if (keyword) {
+
     conditions.push(
       or(
-        sql`${products.searchVector} @@ websearch_to_tsquery('english', ${keyword})`,
+        sql`${products.searchVector} @@ websearch_to_tsquery('english', ${orQueryKeyword})`,
         ilike(products.name, `%${keyword}%`),
       )!,
     );
@@ -217,11 +220,15 @@ export const filterProducts = async (filters: FilterProductInput) => {
   const priceConditions = [];
 
   if (minPrice !== undefined) {
-    priceConditions.push(sql`MIN(${productVariants.price}) >= ${minPrice}`);
+    priceConditions.push(
+      sql`MIN(${productVariants.price}) FILTER(WHERE ${productVariants.isAvailable} = true) >= ${minPrice}`,
+    );
   }
 
   if (maxPrice !== undefined) {
-    priceConditions.push(sql`MAX(${productVariants.price} <= ${maxPrice})`);
+    priceConditions.push(
+      sql`MAX(${productVariants.price}) FILTER(WHERE ${productVariants.isAvailable} = true) <= ${maxPrice}`,
+    );
   }
 
   const whereClause = and(...conditions);
@@ -244,7 +251,7 @@ export const filterProducts = async (filters: FilterProductInput) => {
       case "relevant":
       default:
         return keyword
-          ? sql<number>`ts_rank(${products.searchVector}, websearch_to_tsquery('english', ${keyword}))`
+          ? sql<number>`ts_rank(${products.searchVector}, websearch_to_tsquery('english', ${orQueryKeyword}))`
           : sql<number>`1`;
     }
   })();
@@ -290,14 +297,18 @@ export const filterProducts = async (filters: FilterProductInput) => {
     .limit(limit)
     .offset(offset);
 
-  const [{ total }] = await db
-    .select({ total: sql<number>`COUNT(DISTINCT ${products.id})` })
+  const totalQuery = db
+    .select({ id: products.id })
     .from(products)
     .innerJoin(brands, eq(products.brandId, brands.id))
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .leftJoin(productVariants, eq(products.id, productVariants.productId))
     .where(whereClause)
-    .having(havingClause);
+    .groupBy(products.id, brands.id, categories.id)
+    .having(havingClause)
+    .as("filtered_products");
+
+  const [{ total }] = await db.select({ total: sql<number>`COUNT(*)` }).from(totalQuery);
 
   const data = rows.map((row) => ({
     id: row.id,
