@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { getProductWithDetailsByIdOrSlugService } from "../services/product.services";
+import { getProductsService, getProductWithDetailsByIdOrSlugService } from "../services/product.services";
 import { BadRequestError } from "../utils/error";
+import { filterProductSchema } from "../schema/product.schema";
 
 /**
- * @route               /api/v1/product/:identifier
+ * @route               /api/v1/products/:identifier
  * @method              GET
  * @description         Get product details by its id
  * @access              Public
@@ -21,3 +22,21 @@ export const productByIdController = async (req: Request, res: Response, next: N
     next(error);
   }
 };
+
+/**
+ * @route               /api/v1/products
+ * @method              GET
+ * @description         Get products with filters
+ * @access              Public
+ */
+export const getProductsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userInputFilters = filterProductSchema.parse(req.query);
+
+    const products = await getProductsService(userInputFilters);
+
+    return res.status(200).send(products);
+  } catch (error) {
+    next(error);
+  }
+}

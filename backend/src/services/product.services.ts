@@ -1,4 +1,9 @@
-import { findProductById, findProductWithDetailsByIdOrSlug } from "../repository/product.repository";
+import {
+  filterProducts,
+  findProductById,
+  findProductWithDetailsByIdOrSlug,
+} from "../repository/product.repository";
+import { FilterProductInput } from "../schema/product.schema";
 import { NotFoundError } from "../utils/error";
 
 export const getProductByIdService = async (productId: string) => {
@@ -19,4 +24,8 @@ export const getProductWithDetailsByIdOrSlugService = async (productIdentifier: 
   }
 
   return product;
+};
+
+export const getProductsService = async (filterProduct: FilterProductInput) => {
+  return filterProducts(filterProduct);
 };
