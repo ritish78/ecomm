@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import db from "../db";
 import { Product, products } from "../models/products.model";
 import { brands } from "../models/brands.model";
@@ -7,7 +7,6 @@ import { productImages } from "../models/productImages.model";
 import { productVariants } from "../models/productVariant.model";
 import isUuid from "../utils/isUUID";
 import { FilterProductInput } from "../schema/product.schema";
-import { isMainThread } from "node:worker_threads";
 import toOrQuery from "../utils/toOrQuery";
 
 export const findProductById = async (productId: string): Promise<Product> => {
@@ -74,7 +73,6 @@ export const findProductWithDetailsById = async (productId: string) => {
       id: products.id,
       name: products.name,
       slug: products.slug,
-      sellerId: products.sellerId,
       description: products.description,
       isActive: products.isActive,
       createdAt: products.createdAt,
@@ -136,7 +134,6 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
       id: products.id,
       name: products.name,
       slug: products.slug,
-      sellerId: products.sellerId,
       description: products.description,
       isActive: products.isActive,
       createdAt: products.createdAt,
@@ -207,7 +204,6 @@ export const filterProducts = async (filters: FilterProductInput) => {
 
   const orQueryKeyword = keyword ? toOrQuery(keyword) : undefined;
   if (keyword) {
-
     conditions.push(
       or(
         sql`${products.searchVector} @@ websearch_to_tsquery('english', ${orQueryKeyword})`,

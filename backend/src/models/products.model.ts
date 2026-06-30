@@ -2,7 +2,6 @@ import { InferSelectModel } from "drizzle-orm";
 import { varchar, timestamp, uuid, pgTable, index, boolean, text, customType } from "drizzle-orm/pg-core";
 import { brands } from "./brands.model";
 import { categories } from "./categories.model";
-import { users } from "./users.model";
 
 const tsvector = customType<{ data: string }>({
   dataType() {
@@ -14,7 +13,6 @@ export const products = pgTable(
   "products",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    sellerId: uuid("seller_id").references(() => users.id, { onDelete: "restrict" }),
     name: varchar("name", { length: 255 }).notNull(),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     description: text("description"),
@@ -33,7 +31,6 @@ export const products = pgTable(
     index("product_slug_index").on(table.slug),
     index("product_brand_id_index").on(table.brandId),
     index("product_category_id_index").on(table.categoryId),
-    index("product_seller_id_index").on(table.sellerId),
   ],
 );
 
