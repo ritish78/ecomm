@@ -3,17 +3,14 @@ import { AuthError, BadRequestError, ForbiddenError } from "../utils/error";
 import { Permissions } from "../config/permissions";
 import { hasStorePermissionService } from "../services/store.service";
 
-export const requirePermission = (
-  permissionKey: Permissions,
-  getStoreId: (req: Request) => Promise<string | null> | string | null,
-) => {
+export const requirePermission = (permissionKey: Permissions) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user || !req.user.id) {
         throw new AuthError("User is not authenticated!");
       }
 
-      const storeId = await getStoreId(req);
+      const storeId = req.params.storeId as string;
 
       if (!storeId) {
         throw new BadRequestError(`Store not found of id: ${storeId}`);
@@ -26,6 +23,8 @@ export const requirePermission = (
           "You don't have permission to perform this action! Contact the manager/owner/admin!",
         );
       }
+
+      next();
     } catch (error) {
       next(error);
     }

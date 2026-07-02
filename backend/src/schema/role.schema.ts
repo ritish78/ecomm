@@ -1,0 +1,22 @@
+import { z } from "zod";
+import { PERMISSIONS } from "../config/permissions";
+
+export const createRoleSchema = z
+  .object({
+    name: z.string().min(1, { error: "Please enter the name of the new role!" }),
+    permissionKeys: z
+      .array(z.enum(Object.values(PERMISSIONS)))
+      .min(1, { error: "Please provide atleast one permission for the new role!" }),
+  })
+  .strict();
+
+export const updateRolePermissionSchema = z
+  .object({
+    permissionKeys: z
+      .array(z.enum(Object.values(PERMISSIONS)))
+      .min(1, { error: "Please provide atleast one permission to update!" }),
+  })
+  .strict();
+
+export type CreateRoleInput = z.infer<typeof createRoleSchema>;
+export type UpdateRolePermissionInput = z.infer<typeof updateRolePermissionSchema>;
