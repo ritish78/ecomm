@@ -1,12 +1,23 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/authenticate";
 import { requirePermission } from "../middleware/requirePermission";
-import { addMembersController, createStoreController } from "../controller/storeMembers.controller";
+import {
+  addMembersController,
+  createProductListingController,
+  createStoreController,
+} from "../controller/store.controller";
 import { createRoleController, updateRolePermissionController } from "../controller/role.controller";
 
 const router = Router();
 
 router.post("/", authenticate, createStoreController);
+
+router.post(
+  "/:storeId/products",
+  authenticate,
+  requirePermission("product:create"),
+  createProductListingController,
+);
 
 router.post("/:storeId/members", authenticate, requirePermission("members:add"), addMembersController);
 

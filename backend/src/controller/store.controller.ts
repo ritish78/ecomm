@@ -32,7 +32,6 @@ export const createStoreController = async (req: Request, res: Response, next: N
   }
 };
 
-
 /**
  * @route               /stores/:storeId/members
  * @method              POST
@@ -53,3 +52,15 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
   }
 };
 
+/**
+ * @route               /stores/:storeId/products
+ * @method              POST
+ * @description         Create product listing in a store
+ * @access              products:create
+ */
+export const createProductListingController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+  } catch (error) {
+    next(error);
+  }
+};

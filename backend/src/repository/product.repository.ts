@@ -1,5 +1,5 @@
 import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
-import db from "../db";
+import db, { Tx } from "../db";
 import { Product, products } from "../models/products.model";
 import { brands } from "../models/brands.model";
 import { categories } from "../models/categories.model";
@@ -336,4 +336,19 @@ export const filterProducts = async (filters: FilterProductInput) => {
     totalPages: Math.ceil(Number(total) / limit),
     data,
   };
+};
+
+export const createProduct = async (
+  tx: Tx,
+  storeId: string,
+  name: string,
+  slug: string,
+  description: string,
+  brandId: string,
+  categoryId: string,
+) => {
+  //should I make a junction table to store storeId and productId or should I store store_id in products table
+  //in my previous projects, I would have gone with storing the store_id in products table itself
+  //but for this, I want to use a junction table store_products table instead.
+  // const [product] = await tx.insert(products).values({ name, slug, description, brandId, categoryId, })
 };
