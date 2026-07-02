@@ -4,6 +4,7 @@ import { permission } from "../models/permission.model";
 import { roles } from "../models/roles.model";
 import { rolePermission } from "../models/rolePermission.model";
 import { storeMembers } from "../models/storeMembers.model";
+import { USER_ROLES } from "../config/roles";
 
 // This function will create custom roles for a specific store.
 // We have admin, owner, manager, moderator and storeMan.
@@ -70,4 +71,14 @@ export const getRolesWithPermission = async (roleId: string) => {
     ...role,
     permissions: rolePermissions.map((rolePerm) => rolePerm.key),
   };
+};
+
+export const getGlobalOwnerRole = async (tx: Tx) => {
+  const [ownerRole] = await tx
+    .select()
+    .from(roles)
+    .where(and(eq(roles.name, USER_ROLES.owner), isNull(roles.storeId)))
+    .limit(1);
+
+  return ownerRole;
 };

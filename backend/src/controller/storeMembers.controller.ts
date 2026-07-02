@@ -1,6 +1,37 @@
 import { Request, Response, NextFunction } from "express";
 import { addMemberSchema } from "../schema/storeMembers.schema";
-import { addMemberToStoreService } from "../services/store.service";
+import { addMemberToStoreService, createStoreService } from "../services/store.service";
+import { AuthError } from "../utils/error";
+import { createStoreSchema } from "../schema/store.schema";
+
+/**
+ * @route               /stores
+ * @method              POST
+ * @description         Create a store to sell product. add current user as owner
+ * @access              Authenticated
+ */
+export const createStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AuthError("Not logged in! Login in to continue!");
+    }
+
+    const storeInput = createStoreSchema.parse(req.body);
+    const result = await createStoreService(
+      userId,
+      storeInput.name,
+      storeInput.description,
+      storeInput.logoUrl,
+    );
+
+    return res.status(201).send({ message: "Store created successfully!", ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 /**
  * @route               /stores/:storeId/members
@@ -21,3 +52,4 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+

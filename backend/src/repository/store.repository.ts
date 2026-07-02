@@ -1,10 +1,38 @@
 import { and, eq } from "drizzle-orm";
 import { Permissions } from "../config/permissions";
-import db from "../db";
+import db, { Tx } from "../db";
 import { permission } from "../models/permission.model";
 import { rolePermission } from "../models/rolePermission.model";
 import { storeMembers } from "../models/storeMembers.model";
 import { roles } from "../models/roles.model";
+import { stores } from "../models/store.model";
+
+export const createStore = async (
+  tx: Tx,
+  name: string,
+  slug: string,
+  description: string,
+  logoUrl: string | undefined,
+) => {
+  const [store] = await tx
+    .insert(stores)
+    .values({ name, slug, description, logoUrl, isActive: true })
+    .returning();
+
+  return store;
+};
+
+export const getStoreById = async (tx: Tx, storeId: string) => {
+  const [store] = await db.select().from(stores).where(eq(stores.id, storeId)).limit(1);
+
+  return store;
+};
+
+export const getStoreBySlug = async (tx: Tx, slug: string) => {
+  const [store] = await db.select().from(stores).where(eq(stores.slug, slug));
+
+  return store;
+};
 
 export const hasStorePermission = async (
   userId: string,

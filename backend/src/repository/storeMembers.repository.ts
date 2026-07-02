@@ -1,9 +1,10 @@
-import db from "../db";
+import db, { Tx } from "../db";
 import { storeMembers } from "../models/storeMembers.model";
 
-export const addMemberToStore = async (storeId: string, userId: string, roleId: string) => {
+export const addMemberToStore = async (storeId: string, userId: string, roleId: string, tx?: Tx) => {
+  const userClient = tx ? tx : db;
   //we have unique constraint on (storeId, userId)
-  const [member] = await db.insert(storeMembers).values({ storeId, userId, roleId }).returning();
+  const [member] = await userClient.insert(storeMembers).values({ storeId, userId, roleId }).returning();
 
   return member;
 };
