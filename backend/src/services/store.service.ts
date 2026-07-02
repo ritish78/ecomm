@@ -33,7 +33,12 @@ export const hasStorePermissionService = async (
   storeId: string,
   permissionKey: Permissions,
 ): Promise<boolean> => {
-  return hasStorePermission(userId, storeId, permissionKey);
+    console.log("Checking permission service", userId, storeId, permissionKey);
+    const result = await hasStorePermission(userId, storeId, permissionKey);
+
+    console.log("Result", result);
+
+    return result;
 };
 
 export const addMemberToStoreService = async (storeId: string, email: string, roleId: string) => {

@@ -6,8 +6,9 @@ import { categories } from "../models/categories.model";
 import { productImages } from "../models/productImages.model";
 import { productVariants } from "../models/productVariant.model";
 import isUuid from "../utils/isUUID";
-import { FilterProductInput } from "../schema/product.schema";
+import { CreateProductVariantInput, FilterProductInput } from "../schema/product.schema";
 import toOrQuery from "../utils/toOrQuery";
+import { storeProducts } from "../models/storeProducts.model";
 
 export const findProductById = async (productId: string): Promise<Product> => {
   const [productFromDatabase] = await db.select().from(products).where(eq(products.id, productId));
@@ -340,15 +341,48 @@ export const filterProducts = async (filters: FilterProductInput) => {
 
 export const createProduct = async (
   tx: Tx,
-  storeId: string,
   name: string,
   slug: string,
-  description: string,
+  description: string | undefined,
   brandId: string,
   categoryId: string,
 ) => {
   //should I make a junction table to store storeId and productId or should I store store_id in products table
   //in my previous projects, I would have gone with storing the store_id in products table itself
   //but for this, I want to use a junction table store_products table instead.
-  // const [product] = await tx.insert(products).values({ name, slug, description, brandId, categoryId, })
+  const [product] = await tx
+    .insert(products)
+    .values({ name, slug, description, brandId, categoryId })
+    .returning();
+
+  return product;
+};
+
+export const createProductVariants = async (
+  tx: Tx,
+  productId: string,
+  variants: CreateProductVariantInput[],
+) => {
+  const productVariant = await tx
+    .insert(productVariants)
+    .values(
+      variants.map((variant, index) => ({
+        productId,
+        weight: variant.weight,
+        unit: variant.unit,
+        price: variant.price,
+        stock: variant.stock ?? 0,
+        sku: variant.sku ?? `${productId}-${variant.weight}${variant.unit}-${index + 1}`.toUpperCase(),
+        isAvailable: true,
+      })),
+    )
+    .returning();
+
+  return productVariant;
+};
+
+export const linkProductToStore = async (tx: Tx, storeId: string, productId: string) => {
+  const [storeProduct] = await tx.insert(storeProducts).values({ storeId, productId }).returning();
+
+  return storeProduct;
 };

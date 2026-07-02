@@ -1,10 +1,15 @@
+import db from "../db";
 import {
+  createProduct,
+  createProductVariants,
   filterProducts,
   findProductById,
   findProductWithDetailsByIdOrSlug,
+  linkProductToStore,
 } from "../repository/product.repository";
-import { FilterProductInput } from "../schema/product.schema";
+import { CreateProductInput, CreateProductVariantInput, FilterProductInput } from "../schema/product.schema";
 import { NotFoundError } from "../utils/error";
+import toSlug from "../utils/toSlug";
 
 export const getProductByIdService = async (productId: string) => {
   const product = await findProductById(productId);
@@ -28,4 +33,22 @@ export const getProductWithDetailsByIdOrSlugService = async (productIdentifier: 
 
 export const getProductsService = async (filterProduct: FilterProductInput) => {
   return filterProducts(filterProduct);
+};
+
+export const createProductService = async (storeId: string, product: CreateProductInput) => {
+  return db.transaction(async (tx) => {
+    const slug = toSlug(product.name);
+    const createdProduct = await createProduct(
+      tx,
+      product.name,
+      slug,
+      product.description,
+      product.brandId,
+      product.categoryId,
+    );
+    const createdProductVariant = await createProductVariants(tx, createdProduct.id, product.variants);
+    const createProductStoreLink = await linkProductToStore(tx, storeId, createdProduct.id);
+
+    return { storeId: createProductStoreLink.storeId, ...createdProduct, variants: createdProductVariant };
+  });
 };

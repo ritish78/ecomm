@@ -44,7 +44,7 @@ export const hasStorePermission = async (
     .from(storeMembers)
     .innerJoin(roles, eq(storeMembers.roleId, roles.id))
     .innerJoin(rolePermission, eq(rolePermission.roleId, roles.id))
-    .innerJoin(permission, eq(rolePermission.permissionId, roles.id))
+    .innerJoin(permission, eq(rolePermission.permissionId, permission.id))
     .where(
       and(
         eq(storeMembers.userId, userId),

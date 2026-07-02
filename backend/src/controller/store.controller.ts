@@ -3,6 +3,8 @@ import { addMemberSchema } from "../schema/storeMembers.schema";
 import { addMemberToStoreService, createStoreService } from "../services/store.service";
 import { AuthError } from "../utils/error";
 import { createStoreSchema } from "../schema/store.schema";
+import { CreateProductInput } from "../schema/product.schema";
+import { createProductService } from "../services/product.services";
 
 /**
  * @route               /stores
@@ -60,6 +62,14 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
  */
 export const createProductListingController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("Creating product!");
+    const storeId = req.params.storeId as string;
+
+    const body = req.body as CreateProductInput;
+
+    const result = await createProductService(storeId, body);
+
+    return res.status(201).send({ message: "Product Created successfully!", ...result });
   } catch (error) {
     next(error);
   }
