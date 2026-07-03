@@ -3,9 +3,10 @@ import db from "../db";
 import { findUserByEmail } from "../repository/auth.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
 import { createStore, hasStorePermission } from "../repository/store.repository";
-import { addMemberToStore } from "../repository/storeMembers.repository";
-import { NotFoundError } from "../utils/error";
+import { addMemberToStore, isUserMemberOfStore } from "../repository/storeMembers.repository";
+import { BadRequestError, ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
+import { assertCanActOnRole } from "./storeAuthorization.service";
 
 export const createStoreService = async (
   userId: string,
@@ -41,16 +42,31 @@ export const hasStorePermissionService = async (
     return result;
 };
 
-export const addMemberToStoreService = async (storeId: string, email: string, roleId: string) => {
+export const addMemberToStoreService = async (
+  currentUserId: string,
+  storeId: string,
+  email: string,
+  roleId: string,
+) => {
   const userFromDatabase = await findUserByEmail(email);
 
   if (!userFromDatabase) {
     throw new NotFoundError(`User of provided email: ${email} not found!`);
   }
 
-  //Todo:
-  //add a check to see if the user that we are adding is already a part of the store
-  //then need to use assertCanActOnRole
+  const userIsAlreadyMember = await isUserMemberOfStore(storeId, userFromDatabase.id);
 
+  if (userIsAlreadyMember) {
+    throw new ConflictError("User to add is already member of the store!");
+  }
+
+  //we check if the new member that is being added does not have
+  //higher or same level of role/permissions of the user.
+  //if the new member has higher or same level of role/permissions then we throw an error.
+  await assertCanActOnRole(currentUserId, storeId, roleId);
+
+  //finally, if the user is not already a member of the store and
+  //the new member does not have higher or same level of role/permissions
+  //of the user, then we add the new member to the store.
   return addMemberToStore(storeId, userFromDatabase.id, roleId);
-};
+};;
