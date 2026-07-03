@@ -12,7 +12,7 @@ export const stores = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 255 }).notNull(),
-    slug: varchar("slug", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
     description: text("description"),
     //storing the logourl in this table like in users table. maybe we should move
     //image urls to a different table? we already have product_images table.

@@ -12,6 +12,7 @@ import { BadRequestError } from "../utils/error";
 export const createRoleController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const storeId = req.params.storeId as string;
+    console.log("Creating role for store:", storeId, req.body.name);
 
     if (!storeId) {
       throw new BadRequestError(`Store of the provided id ${storeId} not found!`);

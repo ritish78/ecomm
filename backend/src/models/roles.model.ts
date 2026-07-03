@@ -9,7 +9,13 @@ export const roles = pgTable(
   "roles",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 50 }).notNull().unique(),
+    //i have dropped unique contraint from name as different store
+    //can create their own role. let's say a store has created a role
+    //photographer which has only permission product_images_edit
+    //while another store has also created the same role photographer
+    //but also provides another permission, having unique constraint
+    //on name was not working as db would throw error
+    name: varchar("name", { length: 50 }).notNull(),
     //the column, store_id can be null. it denotes that the role
     //applies to every store. if a store creates a store let's say for
     //a new staff and they are only providing them with specific permissions,

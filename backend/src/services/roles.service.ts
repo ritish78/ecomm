@@ -5,7 +5,6 @@ import {
   deleteRolePermissions,
   getPermissionByKeys,
   getRoleById,
-  getRolesWithPermission,
   insertRolePermission,
 } from "../repository/roles.repository";
 import { BadRequestError } from "../utils/error";

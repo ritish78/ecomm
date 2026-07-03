@@ -10,7 +10,7 @@ export const categories = pgTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
-  (table) => [index("category_slug_index").on(table.slug)],
+  (table) => [index("category_slug_index").on(table.slug), index("category_name_index").on(table.name)],
 );
 
 export type Category = InferSelectModel<typeof categories>;

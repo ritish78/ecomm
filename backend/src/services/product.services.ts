@@ -7,7 +7,7 @@ import {
   findProductWithDetailsByIdOrSlug,
   linkProductToStore,
 } from "../repository/product.repository";
-import { CreateProductInput, CreateProductVariantInput, FilterProductInput } from "../schema/product.schema";
+import { CreateProductInput, FilterProductInput } from "../schema/product.schema";
 import { NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
 

@@ -48,5 +48,9 @@ export const addMemberToStoreService = async (storeId: string, email: string, ro
     throw new NotFoundError(`User of provided email: ${email} not found!`);
   }
 
+  //Todo:
+  //add a check to see if the user that we are adding is already a part of the store
+  //then need to use assertCanActOnRole
+
   return addMemberToStore(storeId, userFromDatabase.id, roleId);
 };
