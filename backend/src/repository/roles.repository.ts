@@ -11,32 +11,63 @@ import { USER_ROLES } from "../config/roles";
 // We could extend the roles to have a person deal with updating
 // photos of a product. so, we could create a new role called
 // photoEditor and provide them with ony product_images:edit permission
+/**
+ * @param {string} storeId - id of the store to create the role for
+ * @param {string} name - name of the role to create
+ * @returns {Promise<roles>} - the created role
+ */
 export const createCustomRoles = async (storeId: string, name: string) => {
   const [role] = await db.insert(roles).values({ storeId, name }).returning();
 
   return role;
 };
 
+/**
+ * @param {string} roleId - id of the role to get
+ * @returns {Promise<roles | null>} - the retrieved role or null if not found
+ */
 export const getRoleById = async (roleId: string) => {
   const [role] = await db.select().from(roles).where(eq(roles.id, roleId));
 
   return role;
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string[]} keys - array of permission keys to get
+ * @returns {Promise<Permission[]>} - the retrieved permissions
+ */
 export const getPermissionByKeys = async (tx: Tx, keys: string[]) => {
   return tx.select().from(permission).where(inArray(permission.key, keys));
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} roleId - id of the role whose permissions to delete
+ * @returns {Promise<void>} - a promise resolving when the permissions are deleted
+ */
 export const deleteRolePermissions = async (tx: Tx, roleId: string) => {
   return tx.delete(rolePermission).where(eq(rolePermission.roleId, roleId));
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} roleId - id of the role to insert permissions for
+ * @param {string[]} permissionIds - array of permission IDs to insert
+ * @returns {Promise<void>} - a promise resolving when the permissions are inserted
+ */
 export const insertRolePermission = async (tx: Tx, roleId: string, permissionIds: string[]) => {
   if (permissionIds.length === 0) return;
 
-  return tx.insert(rolePermission).values(permissionIds.map((permissionId) => ({ roleId, permissionId })));
+  tx.insert(rolePermission).values(permissionIds.map((permissionId) => ({ roleId, permissionId })));
 };
 
+/**
+ * @param {string} storeId - id of the store to get roles for
+ * @param {string} userId - id of the user whose role to update
+ * @param {string} newRoleId - id of the new role to assign
+ * @returns {Promise<StoreMember>} - the updated store member
+ */
 export const updateRoleOfStoreMember = async (storeId: string, userId: string, newRoleId: string) => {
   const [updated] = await db
     .update(storeMembers)
@@ -47,6 +78,10 @@ export const updateRoleOfStoreMember = async (storeId: string, userId: string, n
   return updated;
 };
 
+/**
+ * @param {string} storeId - id of the store to get roles for
+ * @returns {Promise<Role[]>} - the retrieved roles
+ */
 export const getAllRolesOfStore = async (storeId: string) => {
   return db
     .select()
@@ -54,6 +89,10 @@ export const getAllRolesOfStore = async (storeId: string) => {
     .where(or(eq(roles.storeId, storeId), isNull(roles.storeId)));
 };
 
+/**
+ * @param {string} roleId - id of the role to get permissions for
+ * @returns {Promise<Role | null>} - the role with its permissions or null if not found
+ */
 export const getRolesWithPermission = async (roleId: string) => {
   const [role] = await db.select().from(roles).where(eq(roles.id, roleId));
 
@@ -73,6 +112,10 @@ export const getRolesWithPermission = async (roleId: string) => {
   };
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @returns {Promise<Role | null>} - the global owner role or null if not found
+ */
 export const getGlobalOwnerRole = async (tx: Tx) => {
   const [ownerRole] = await tx
     .select()

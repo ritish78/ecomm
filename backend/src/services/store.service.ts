@@ -34,12 +34,12 @@ export const hasStorePermissionService = async (
   storeId: string,
   permissionKey: Permissions,
 ): Promise<boolean> => {
-    console.log("Checking permission service", userId, storeId, permissionKey);
-    const result = await hasStorePermission(userId, storeId, permissionKey);
+  console.log("Checking permission service", userId, storeId, permissionKey);
+  const result = await hasStorePermission(userId, storeId, permissionKey);
 
-    console.log("Result", result);
+  console.log("Result", result);
 
-    return result;
+  return result;
 };
 
 export const addMemberToStoreService = async (
@@ -69,4 +69,4 @@ export const addMemberToStoreService = async (
   //the new member does not have higher or same level of role/permissions
   //of the user, then we add the new member to the store.
   return addMemberToStore(storeId, userFromDatabase.id, roleId);
-};;
+};

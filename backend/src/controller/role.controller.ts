@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { createRoleSchema, updateRolePermissionSchema } from "../schema/role.schema";
-import { createRoleForStore, updateRolePermission } from "../services/roles.service";
+import { createRoleForStoreService, updateRolePermissionService } from "../services/roles.service";
 import { BadRequestError } from "../utils/error";
 
 /**
@@ -20,7 +20,7 @@ export const createRoleController = async (req: Request, res: Response, next: Ne
 
     const userInput = createRoleSchema.parse(req.body);
 
-    const role = await createRoleForStore(storeId, userInput.name, userInput.permissionKeys);
+    const role = await createRoleForStoreService(storeId, userInput.name, userInput.permissionKeys);
 
     return res.status(201).send({ message: "Created a role successfully!", role });
   } catch (error) {
@@ -40,7 +40,11 @@ export const updateRolePermissionController = async (req: Request, res: Response
 
     const userInput = updateRolePermissionSchema.parse(req.body);
 
-    const role = await updateRolePermission(storeId as string, roleId as string, userInput.permissionKeys);
+    const role = await updateRolePermissionService(
+      storeId as string,
+      roleId as string,
+      userInput.permissionKeys,
+    );
 
     return res.status(200).send({ message: "Updated role successfully!", role });
   } catch (error) {

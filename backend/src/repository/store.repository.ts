@@ -7,6 +7,14 @@ import { storeMembers } from "../models/storeMembers.model";
 import { roles } from "../models/roles.model";
 import { stores } from "../models/store.model";
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} name - name of the store to create
+ * @param {string} slug - slug of the store to create
+ * @param {string} description - description of the store to create
+ * @param {string | undefined} logoUrl - URL of the store's logo
+ * @returns {Promise<Store>} - the created store
+ */
 export const createStore = async (
   tx: Tx,
   name: string,
@@ -22,18 +30,32 @@ export const createStore = async (
   return store;
 };
 
-export const getStoreById = async (tx: Tx, storeId: string) => {
+/**
+ * @param {string} storeId - id of the store to get
+ * @returns {Promise<Store | null>} - the retrieved store or null if not found
+ */
+export const getStoreById = async (storeId: string) => {
   const [store] = await db.select().from(stores).where(eq(stores.id, storeId)).limit(1);
 
   return store;
 };
 
-export const getStoreBySlug = async (tx: Tx, slug: string) => {
+/**
+ * @param {string} slug - slug of the store to get
+ * @returns {Promise<Store | null>} - the retrieved store or null if not found
+ */
+export const getStoreBySlug = async (slug: string) => {
   const [store] = await db.select().from(stores).where(eq(stores.slug, slug));
 
   return store;
 };
 
+/**
+ * @param {string} userId - id of the user to check
+ * @param {string} storeId - id of the store to check
+ * @param {Permissions} permissionKey - key of the permission to check
+ * @returns {Promise<boolean>} - true if the user has the permission, false otherwise
+ */
 export const hasStorePermission = async (
   userId: string,
   storeId: string,
@@ -57,6 +79,11 @@ export const hasStorePermission = async (
   return result.length > 0;
 };
 
+/**
+ * @param {string} userId - id of the user to check
+ * @param {string} storeId - id of the store to check
+ * @returns {Promise<StoreMembershipWithPermission | null>} - the store membership with permissions or null if not found
+ */
 export const getStoreMembershipWithPermission = async (userId: string, storeId: string) => {
   const rows = await db
     .select({ roleId: storeMembers.roleId, permissionKey: permission.key })

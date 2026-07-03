@@ -5,12 +5,16 @@ import { brands } from "../models/brands.model";
 import { categories } from "../models/categories.model";
 import { productImages } from "../models/productImages.model";
 import { productVariants } from "../models/productVariant.model";
-import isUuid from "../utils/isUUID";
+import isUuid from "../utils/isUuid";
 import { CreateProductVariantInput, FilterProductInput } from "../schema/product.schema";
 import toOrQuery from "../utils/toOrQuery";
 import { storeProducts } from "../models/storeProducts.model";
 
-export const findProductById = async (productId: string): Promise<Product> => {
+/**
+ * @param {string} productId - id of the product to get
+ * @returns {Promise<Product | null>} - the retrieved product or null if not found
+ */
+export const findProductById = async (productId: string): Promise<Product | null> => {
   const [productFromDatabase] = await db.select().from(products).where(eq(products.id, productId));
 
   return productFromDatabase;
@@ -127,6 +131,10 @@ export const findProductWithDetailsById = async (productId: string) => {
   };
 };
 
+/**
+ * @param {string} productIdentifier - id or slug of the product to get
+ * @returns {Promise<ProductWithDetails | null>} - the retrieved product with details or null if not found
+ */
 export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string) => {
   const isIdentifierUuid = isUuid(productIdentifier);
 
@@ -188,6 +196,10 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
   };
 };
 
+/**
+ * @param {FilterProductInput} filters - filters to use to filter the products
+ * @returns {Promise<{ totalProducts: number; page: number; limit: number; totalPages: number; data: Product[] }>} - the filtered products with pagination
+ */
 export const filterProducts = async (filters: FilterProductInput) => {
   const { keyword, categoryId, brandId, minPrice, maxPrice, limit, page, sort } = filters;
 
@@ -339,6 +351,15 @@ export const filterProducts = async (filters: FilterProductInput) => {
   };
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} name - name of the product to create
+ * @param {string} slug - slug of the product to create
+ * @param {string | undefined} description - description of the product to create
+ * @param {string} brandId - id of the brand to associate with the product
+ * @param {string} categoryId - id of the category to associate with the product
+ * @returns {Promise<Product>} - the created product
+ */
 export const createProduct = async (
   tx: Tx,
   name: string,
@@ -358,6 +379,12 @@ export const createProduct = async (
   return product;
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} productId - ID of the product to create variants for
+ * @param {CreateProductVariantInput[]} variants - list of variants to create
+ * @returns {Promise<ProductVariant[]>} - the created product variants
+ */
 export const createProductVariants = async (
   tx: Tx,
   productId: string,
@@ -381,6 +408,12 @@ export const createProductVariants = async (
   return productVariant;
 };
 
+/**
+ * @param {Tx} tx - database transaction or a database connection
+  * @param {string} storeId - ID of the store to link the product to
+  * @param {string} productId - ID of the product to link to the store
+  * @returns {Promise<StoreProduct>} - the linked store product
+ */
 export const linkProductToStore = async (tx: Tx, storeId: string, productId: string) => {
   const [storeProduct] = await tx.insert(storeProducts).values({ storeId, productId }).returning();
 

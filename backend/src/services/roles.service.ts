@@ -3,6 +3,7 @@ import db from "../db";
 import {
   createCustomRoles,
   deleteRolePermissions,
+  getAllRolesOfStore,
   getPermissionByKeys,
   getRoleById,
   insertRolePermission,
@@ -13,7 +14,7 @@ import { BadRequestError } from "../utils/error";
 //if all the permission keys e.g. products:create key exists in our table or not
 //if it does, then we first delete all permissions for that role and then
 //add the permissions that have matched(means exists) in our database
-export const setRolePermission = (roleId: string, permissionKeys: string[]) => {
+export const setRolePermissionService = (roleId: string, permissionKeys: string[]) => {
   return db.transaction(async (tx) => {
     //we first get the ids of the permissionKeys
     const matchedPermissions = await getPermissionByKeys(tx, permissionKeys);
@@ -39,14 +40,18 @@ export const setRolePermission = (roleId: string, permissionKeys: string[]) => {
   });
 };
 
-export const createRoleForStore = async (storeId: string, name: string, permissionKeys: Permissions[]) => {
+export const createRoleForStoreService = async (
+  storeId: string,
+  name: string,
+  permissionKeys: Permissions[],
+) => {
   const role = await createCustomRoles(storeId, name);
-  const grantedKeys = await setRolePermission(role.id, permissionKeys);
+  const grantedKeys = await setRolePermissionService(role.id, permissionKeys);
 
   return { ...role, permission: grantedKeys };
 };
 
-export const updateRolePermission = async (
+export const updateRolePermissionService = async (
   storeId: string,
   roleId: string,
   permissionKeys: Permissions[],
@@ -61,8 +66,12 @@ export const updateRolePermission = async (
     throw new BadRequestError("Can not update the role of another store!");
   }
 
-  const grantedKeys = await setRolePermission(roleId, permissionKeys);
+  const grantedKeys = await setRolePermissionService(roleId, permissionKeys);
 
   //we are returning with same structure as in createRoleForStore
   return { ...role, permission: grantedKeys };
+};
+
+export const getAllRolesOfStoreService = async (storeId: string) => {
+  return getAllRolesOfStore(storeId);
 };
