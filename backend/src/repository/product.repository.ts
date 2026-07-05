@@ -419,3 +419,28 @@ export const linkProductToStore = async (tx: Tx, storeId: string, productId: str
 
   return storeProduct;
 };
+
+/**
+ * @param {string} storeId - id of the store to get the product for
+ * @param {string} productId - id of the product to get for the store
+ * @returns {Promise<StoreProduct | null>} - the retrieved store product 
+ */
+export const findStoreProductByStoreIdAndProductId = async (storeId: string, productId: string) => {
+  const [storeProduct] = await db
+    .select()
+    .from(storeProducts)
+    .where(and(eq(storeProducts.storeId, storeId), eq(storeProducts.productId, productId)))
+    .limit(1);
+
+  return storeProduct;
+};
+
+/**
+ * @param {string} productId - id of the product to delete
+ * @returns {Promise<Product | null>} - the deleted product
+ */
+export const deleteProductById = async (productId: string) => {
+  const [deletedProduct] = await db.delete(products).where(eq(products.id, productId)).returning();
+
+  return deletedProduct;
+};

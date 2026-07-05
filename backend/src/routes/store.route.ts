@@ -5,6 +5,7 @@ import {
   addMembersController,
   createProductListingController,
   createStoreController,
+  deleteProductListingController,
 } from "../controller/store.controller";
 import { createRoleController, updateRolePermissionController } from "../controller/role.controller";
 
@@ -28,6 +29,13 @@ router.patch(
   authenticate,
   requirePermission("roles:update"),
   updateRolePermissionController,
+);
+
+router.delete(
+  "/:storeId/products/:productId",
+  authenticate,
+  requirePermission("product:delete"),
+  deleteProductListingController,
 );
 
 export default router;

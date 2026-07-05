@@ -4,7 +4,7 @@ import { addMemberToStoreService, createStoreService } from "../services/store.s
 import { AuthError } from "../utils/error";
 import { createStoreSchema } from "../schema/store.schema";
 import { CreateProductInput } from "../schema/product.schema";
-import { createProductService } from "../services/product.services";
+import { createProductService, deleteProductByIdService } from "../services/product.services";
 
 /**
  * @route               /stores
@@ -76,6 +76,25 @@ export const createProductListingController = async (req: Request, res: Response
     const result = await createProductService(storeId, body);
 
     return res.status(201).send({ message: "Product Created successfully!", ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route               /stores/:storeId/products/:productId
+ * @method              DELETE
+ * @description         Delete product listing in a store
+ * @access              products:delete
+ */
+export const deleteProductListingController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+
+    const result = await deleteProductByIdService(productId, storeId);
+
+    return res.status(200).send({ message: "Product deleted successfully!", ...result });
   } catch (error) {
     next(error);
   }

@@ -14,6 +14,11 @@ import { BadRequestError } from "../utils/error";
 //if all the permission keys e.g. products:create key exists in our table or not
 //if it does, then we first delete all permissions for that role and then
 //add the permissions that have matched(means exists) in our database
+/**
+ * @param {string} roleId - id of the role to set permissions for
+ * @param {string[]} permissionKeys - array of permission keys to set for the role
+ * @returns {Promise<string[]>} - the set permission keys for the role
+ */
 export const setRolePermissionService = (roleId: string, permissionKeys: string[]) => {
   return db.transaction(async (tx) => {
     //we first get the ids of the permissionKeys
@@ -40,6 +45,12 @@ export const setRolePermissionService = (roleId: string, permissionKeys: string[
   });
 };
 
+/**
+ * @param {string} storeId - id of the store to create the role for
+ * @param {string} name - name of the role to create
+ * @param {string[]} permissionKeys - array of permission keys to set for the role
+ * @returns {Promise<roles>} - the created role with granted permissions
+ */
 export const createRoleForStoreService = async (
   storeId: string,
   name: string,
@@ -51,6 +62,12 @@ export const createRoleForStoreService = async (
   return { ...role, permission: grantedKeys };
 };
 
+/**
+ * @param {string} storeId - id of the store to get roles for
+ * @param {string} roleId - id of the role whose permissions to update
+ * @param {string[]} permissionKeys - array of permission keys to set for the role
+ * @returns {Promise<roles>} - the updated role with granted permissions
+ */
 export const updateRolePermissionService = async (
   storeId: string,
   roleId: string,
@@ -72,6 +89,10 @@ export const updateRolePermissionService = async (
   return { ...role, permission: grantedKeys };
 };
 
+/**
+ * @param {string} storeId - id of the store to get roles for
+ * @returns {Promise<roles[]>} - the retrieved roles of the store
+ */
 export const getAllRolesOfStoreService = async (storeId: string) => {
   return getAllRolesOfStore(storeId);
 };

@@ -4,10 +4,17 @@ import { findUserByEmail } from "../repository/auth.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
 import { createStore, hasStorePermission } from "../repository/store.repository";
 import { addMemberToStore, isUserMemberOfStore } from "../repository/storeMembers.repository";
-import { BadRequestError, ConflictError, NotFoundError } from "../utils/error";
+import { ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
 import { assertCanActOnRole } from "./storeAuthorization.service";
 
+/**
+ * @param {string} userId - id of the user creating the store
+ * @param {string} name - name of the store to create
+ * @param {string} description - description of the store to create
+ * @param {string | undefined} logoUrl - URL of the store's logo
+ * @returns {Promise<{store: Store, member: StoreMember}>} - the created store and the member who created it
+ */
 export const createStoreService = async (
   userId: string,
   name: string,
@@ -29,6 +36,12 @@ export const createStoreService = async (
   });
 };
 
+/**
+ * @param {string} userId - id of the user to check
+ * @param {string} storeId - id of the store to check
+ * @param {Permissions} permissionKey - key of the permission to check
+ * @returns {Promise<boolean>} - true if the user has the permission, false otherwise
+ */
 export const hasStorePermissionService = async (
   userId: string,
   storeId: string,
@@ -42,6 +55,13 @@ export const hasStorePermissionService = async (
   return result;
 };
 
+/**
+ * @param {string} currentUserId - id of the user adding the member
+ * @param {string} storeId - id of the store to add the member to
+ * @param {string} email - email of the user to add as a member
+ * @param {string} roleId - id of the role to assign to the user
+ * @returns {Promise<StoreMember>} - the added store member
+ */
 export const addMemberToStoreService = async (
   currentUserId: string,
   storeId: string,
