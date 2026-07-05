@@ -201,7 +201,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
  * @returns {Promise<{ totalProducts: number; page: number; limit: number; totalPages: number; data: Product[] }>} - the filtered products with pagination
  */
 export const filterProducts = async (filters: FilterProductInput) => {
-  const { keyword, categoryId, brandId, minPrice, maxPrice, limit, page, sort } = filters;
+  const { keyword, storeId, categoryId, brandId, minPrice, maxPrice, limit, page, sort } = filters;
 
   const offset = (page - 1) * limit;
 
@@ -222,6 +222,12 @@ export const filterProducts = async (filters: FilterProductInput) => {
         sql`${products.searchVector} @@ websearch_to_tsquery('english', ${orQueryKeyword})`,
         ilike(products.name, `%${keyword}%`),
       )!,
+    );
+  }
+
+  if (storeId) {
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM ${storeProducts} WHERE ${storeProducts.productId} = ${products.id} AND ${storeProducts.storeId} = ${storeId})`,
     );
   }
 
@@ -444,3 +450,34 @@ export const deleteProductById = async (productId: string) => {
 
   return deletedProduct;
 };
+
+
+//feel like we can edit the filterProducts function to accept storeId
+//and filter product by storeId and we will have type of return
+//and when we change any one of the function, we won't have to change
+//the other function.
+// export const getAllProductsOfStore = async (storeId: string) => {
+//   const productsOfStore = await db
+//     .select({
+//       id: products.id,
+//       name: products.name,
+//       slug: products.slug,
+//       description: products.description,
+//       isActive: products.isActive,
+//       brandId: brands.id,
+//       brandName: brands.name,
+//       categoryId: categories.id,
+//       categoryName: categories.name,
+//       categorySlug: categories.slug,
+//     })
+//     .from(products)
+//     .innerJoin(storeProducts, eq(products.id, storeProducts.productId))
+//     .innerJoin(brands, eq(products.brandId, brands.id))
+//     .innerJoin(categories, eq(products.categoryId, categories.id))
+//     .leftJoin(productVariants, eq(products.id, productVariants.productId))
+//     .groupBy(products.id, brands.id, categories.id)
+//     .where(eq(storeProducts.storeId, storeId))
+//     .orderBy(asc(products.name));
+
+//   return productsOfStore;
+// };

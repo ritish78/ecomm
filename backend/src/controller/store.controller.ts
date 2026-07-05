@@ -3,11 +3,15 @@ import { addMemberSchema } from "../schema/storeMembers.schema";
 import { addMemberToStoreService, createStoreService } from "../services/store.service";
 import { AuthError } from "../utils/error";
 import { createStoreSchema } from "../schema/store.schema";
-import { CreateProductInput } from "../schema/product.schema";
-import { createProductService, deleteProductByIdService } from "../services/product.services";
+import { CreateProductInput, filterProductSchema } from "../schema/product.schema";
+import {
+  createProductService,
+  deleteProductByIdService,
+  getProductsService,
+} from "../services/product.services";
 
 /**
- * @route               /stores
+ * @route               /api/v1/stores
  * @method              POST
  * @description         Create a store to sell product. add current user as owner
  * @access              Authenticated
@@ -35,7 +39,7 @@ export const createStoreController = async (req: Request, res: Response, next: N
 };
 
 /**
- * @route               /stores/:storeId/members
+ * @route               /api/v1/stores/:storeId/members
  * @method              POST
  * @description         Add members to a store
  * @access              members:add
@@ -61,7 +65,7 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
 };
 
 /**
- * @route               /stores/:storeId/products
+ * @route               /api/v1/stores/:storeId/products
  * @method              POST
  * @description         Create product listing in a store
  * @access              products:create
@@ -82,7 +86,7 @@ export const createProductListingController = async (req: Request, res: Response
 };
 
 /**
- * @route               /stores/:storeId/products/:productId
+ * @route               /api/v1/stores/:storeId/products/:productId
  * @method              DELETE
  * @description         Delete product listing in a store
  * @access              products:delete
@@ -99,3 +103,23 @@ export const deleteProductListingController = async (req: Request, res: Response
     next(error);
   }
 };
+
+/**
+ * @route               /api/v1/stores/:storeId/products
+ * @method              GET
+ * @description         Get all products of a store
+ * @access              Public
+ */
+export const getAllProductsOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+
+    const userInputFilters = filterProductSchema.parse({ ...req.query, storeId });
+
+    const products = await getProductsService(userInputFilters);
+
+    return res.status(200).send({ message: "Products of store retrieved successfully!", products });
+  } catch (error) {
+    next(error);
+  }
+}

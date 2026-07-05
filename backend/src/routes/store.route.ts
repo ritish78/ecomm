@@ -6,6 +6,7 @@ import {
   createProductListingController,
   createStoreController,
   deleteProductListingController,
+  getAllProductsOfStoreController,
 } from "../controller/store.controller";
 import { createRoleController, updateRolePermissionController } from "../controller/role.controller";
 
@@ -37,5 +38,7 @@ router.delete(
   requirePermission("product:delete"),
   deleteProductListingController,
 );
+
+router.get("/:storeId/products", getAllProductsOfStoreController);
 
 export default router;

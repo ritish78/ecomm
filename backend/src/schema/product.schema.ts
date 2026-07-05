@@ -3,6 +3,7 @@ import { PRODUCT_WEIGHT } from "../config/product";
 
 export const filterProductSchema = z.object({
   keyword: z.string().optional(),
+  storeId: z.string().optional(),
   categoryId: z.uuid().optional(),
   brandId: z.uuid().optional(),
   minPrice: z.coerce.number().min(0).optional(),

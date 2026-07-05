@@ -17,17 +17,17 @@ export const productByIdController = async (req: Request, res: Response, next: N
 
     const product = await getProductWithDetailsByIdOrSlugService(req.params.identifier as string);
 
-    return res.status(200).send(product);
+    return res.status(200).send({ message: "Product retrieved successfully!", product });
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * @route               /api/v1/products
- * @method              GET
- * @description         Get products with filters
- * @access              Public
+ * @route                 /api/v1/products
+ * @method                GET
+ * @description           Get products with filters
+ * @access                Public
  */
 export const getProductsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -35,7 +35,7 @@ export const getProductsController = async (req: Request, res: Response, next: N
 
     const products = await getProductsService(userInputFilters);
 
-    return res.status(200).send(products);
+    return res.status(200).send({ message: "Products retrieved successfully!", products });
   } catch (error) {
     next(error);
   }
