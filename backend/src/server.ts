@@ -6,6 +6,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.route";
 import productRoutes from "./routes/product.route";
 import storeRoutes from "./routes/store.route";
+import brandRoutes from "./routes/brand.route";
 
 import { errorHandler } from "./middleware/errorHandler";
 import { FRONTEND_URL } from "./config";
@@ -30,6 +31,7 @@ app.get("/api/v1/ping", (req: Request, res: Response) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/stores", storeRoutes);
+app.use("/api/v1/brands", brandRoutes);
 
 app.use(errorHandler);
 

@@ -1,5 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { getAllBrandsService, getBrandByIdService } from "../services/brands.services";
+import {
+  createBrandService,
+  deleteBrandService,
+  getAllBrandsService,
+  getBrandByIdService,
+  updateBrandService,
+} from "../services/brands.services";
+import { createBrandSchema } from "../schema/brand.schema";
 
 /**
  * @route               /api/v1/brands
@@ -32,6 +39,61 @@ export const getBrandByIdController = async (req: Request, res: Response, next: 
     }
 
     return res.status(200).send({ message: "Brand retrieved successfully!", brand });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route               /api/v1/brands
+ * @method              POST
+ * @description         Create a new brand
+ * @access              Admin
+ */
+export const createBrandController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = createBrandSchema.parse(req.body);
+
+    const brand = await createBrandService(body.name);
+
+    return res.status(201).send({ message: "Brand created successfully!", brand });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route               /api/v1/brands/:brandId
+ * @method              PUT
+ * @description         Update a brand by its id
+ * @access              Admin
+ */
+export const updateBrandController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const brandId = req.params.brandId as string;
+    const body = createBrandSchema.parse(req.body);
+
+    const brand = await updateBrandService(brandId, body.name);
+
+    return res.status(200).send({ message: "Brand updated successfully!", brand });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route               /api/v1/brands/:brandId
+ * @method              DELETE
+ * @description         Delete a brand by its id
+ * @access              Admin
+ */
+export const deleteBrandController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const brandId = req.params.brandId as string;
+
+    const result = await deleteBrandService(brandId);
+
+    return res.status(200).send({ message: "Brand deleted successfully!", ...result });
   } catch (error) {
     next(error);
   }
