@@ -6,7 +6,7 @@ import {
   getBrandByIdService,
   updateBrandService,
 } from "../services/brands.services";
-import { createBrandSchema } from "../schema/brand.schema";
+import { createBrandSchema, updateBrandSchema } from "../schema/brand.schema";
 
 /**
  * @route               /api/v1/brands
@@ -71,7 +71,7 @@ export const createBrandController = async (req: Request, res: Response, next: N
 export const updateBrandController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const brandId = req.params.brandId as string;
-    const body = createBrandSchema.parse(req.body);
+    const body = updateBrandSchema.parse(req.body);
 
     const brand = await updateBrandService(brandId, body.name);
 

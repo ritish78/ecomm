@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import {
+  createCategoryService,
+  deleteCategoryService,
   getAllCategoriesServices,
   getCategoryByIdService,
   getCategoryBySlugService,
+  updateCategoryService,
 } from "../services/categories.service";
+import { createCategorySchema } from "../schema/categories.schema";
 
 /**
  * @route               /api/v1/categories
@@ -40,3 +44,57 @@ export const getCategoryByIdController = async (req: Request, res: Response, nex
     next(error);
   }
 };
+
+/**
+ * @route               /api/v1/categories
+ * @method              POST
+ * @description         Create a new category
+ * @access              Admin
+ */
+export const createCategoryController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = createCategorySchema.parse(req.body);
+
+    const category = await createCategoryService(body.name);
+
+    return res.status(201).send({ message: "Category created successfully!", category });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route               /api/v1/categories/:categoryId
+ * @method              PUT
+ * @description         Update a category by its id
+ * @access              Admin
+ */
+export const updateCategoryController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const categoryId = req.params.categoryId as string;
+    const body = createCategorySchema.parse(req.body);
+
+    const category = await updateCategoryService(categoryId, body.name);
+    
+    return res.status(200).send({ message: "Category updated successfully!", category });
+  } catch (error) {
+    next(error);
+  }
+}
+/**
+ * @route               /api/v1/categories/:categoryId
+ * @method              DELETE
+ * @description         Delete a category by its id
+ * @access              Admin
+ */
+export const deleteCategoryController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const categoryId = req.params.categoryId as string;
+
+        const result = await deleteCategoryService(categoryId);
+
+        return res.status(200).send({ message: "Category deleted successfully!", ...result });
+    } catch (error) {
+        next(error)
+    }
+}

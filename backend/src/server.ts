@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.route";
 import productRoutes from "./routes/product.route";
 import storeRoutes from "./routes/store.route";
 import brandRoutes from "./routes/brand.route";
+import categoriesRoutes from "./routes/categories.route";
 
 import { errorHandler } from "./middleware/errorHandler";
 import { FRONTEND_URL } from "./config";
@@ -32,6 +33,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/stores", storeRoutes);
 app.use("/api/v1/brands", brandRoutes);
+app.use("/api/v1/categoires", categoriesRoutes);
 
 app.use(errorHandler);
 
