@@ -4,6 +4,7 @@ import { pgTable } from "drizzle-orm/pg-core";
 import { stores } from "./store.model";
 import { index } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
+import { unique } from "drizzle-orm/pg-core";
 
 export const roles = pgTable(
   "roles",
@@ -22,7 +23,10 @@ export const roles = pgTable(
     //then a new role will be created and we reference that store's id here.
     storeId: uuid("store_id").references(() => stores.id),
   },
-  (table) => [index("role_store_id_index").on(table.storeId)],
+  (table) => [
+    index("role_store_id_index").on(table.storeId),
+    unique("role_name_store_unique").on(table.name, table.storeId),
+  ],
 );
 
 export type Roles = InferSelectModel<typeof roles>;

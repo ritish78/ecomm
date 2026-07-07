@@ -7,12 +7,20 @@ import {
   createStoreController,
   deleteProductListingController,
   getAllProductsOfStoreController,
+  getAllRolesOfStoreController,
+  getAllRolesWithPermissionOfStoreController,
+  getPermissionOfRoleController,
 } from "../controller/store.controller";
 import { createRoleController, updateRolePermissionController } from "../controller/role.controller";
 
 const router = Router();
 
 router.post("/", authenticate, createStoreController);
+
+router.get("/:storeId/products", getAllProductsOfStoreController);
+router.get("/:storeId/roles", authenticate, getAllRolesOfStoreController);
+router.get("/:storeId/roles-permissions", authenticate, getAllRolesWithPermissionOfStoreController);
+router.get("/:storeId/roles/:roleId/permission", authenticate, getPermissionOfRoleController);
 
 router.post(
   "/:storeId/products",
@@ -38,7 +46,5 @@ router.delete(
   requirePermission("product:delete"),
   deleteProductListingController,
 );
-
-router.get("/:storeId/products", getAllProductsOfStoreController);
 
 export default router;

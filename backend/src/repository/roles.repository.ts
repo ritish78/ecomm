@@ -59,7 +59,7 @@ export const deleteRolePermissions = async (tx: Tx, roleId: string) => {
 export const insertRolePermission = async (tx: Tx, roleId: string, permissionIds: string[]) => {
   if (permissionIds.length === 0) return;
 
-  tx.insert(rolePermission).values(permissionIds.map((permissionId) => ({ roleId, permissionId })));
+  await tx.insert(rolePermission).values(permissionIds.map((permissionId) => ({ roleId, permissionId })));
 };
 
 /**
@@ -87,6 +87,42 @@ export const getAllRolesOfStore = async (storeId: string) => {
     .select()
     .from(roles)
     .where(or(eq(roles.storeId, storeId), isNull(roles.storeId)));
+};
+
+/**
+ * @param {string} storeId - id of the store to get roles for
+ */
+export const getAllRolesWithPermissionOfStore = async (storeId: string) => {
+  const storeRoles = await getAllRolesOfStore(storeId);
+
+  const roleIds = storeRoles.map((role) => role.id);
+
+  const allPermissions = await db
+    .select({
+      roleId: rolePermission.roleId,
+      key: permission.key,
+      description: permission.description,
+    })
+    .from(rolePermission)
+    .innerJoin(permission, eq(permission.id, rolePermission.permissionId))
+    .where(inArray(rolePermission.roleId, roleIds));
+
+  const permissionsByRoleId = allPermissions.reduce<
+    Record<string, { key: string; description: string | null }[]>
+  >((acc, { roleId, key, description }) => {
+    if (!acc[roleId]) acc[roleId] = [];
+
+    //Pushing the object instead of just the string
+    acc[roleId].push({ key, description });
+    return acc;
+  }, {});
+
+  return storeRoles.map((role) => ({
+    id: role.id,
+    name: role.name,
+    storeId: role.storeId,
+    permissions: permissionsByRoleId[role.id] ?? [] //without null coalescing, it was returning without permissions key in json if there was no permission for a role
+  }));
 };
 
 /**

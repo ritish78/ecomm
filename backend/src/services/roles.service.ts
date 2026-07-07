@@ -4,11 +4,14 @@ import {
   createCustomRoles,
   deleteRolePermissions,
   getAllRolesOfStore,
+  getAllRolesWithPermissionOfStore,
   getPermissionByKeys,
   getRoleById,
+  getRolesWithPermission,
   insertRolePermission,
 } from "../repository/roles.repository";
-import { BadRequestError } from "../utils/error";
+import { isUserMemberOfStore } from "../repository/storeMembers.repository";
+import { BadRequestError, ForbiddenError } from "../utils/error";
 
 //replaces the roles permission with new permissions. first, we check to see
 //if all the permission keys e.g. products:create key exists in our table or not
@@ -91,8 +94,40 @@ export const updateRolePermissionService = async (
 
 /**
  * @param {string} storeId - id of the store to get roles for
+ * @param {string} userId - id of the user who requested to get roles
  * @returns {Promise<roles[]>} - the retrieved roles of the store
  */
-export const getAllRolesOfStoreService = async (storeId: string) => {
+export const getAllRolesOfStoreService = async (storeId: string, userId: string) => {
+  //first, lets check that if the current user is member of the store
+  const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+
+  if (!userMemberOfStore) {
+    throw new ForbiddenError("You are not allowed to view roles of stores that you are not member of!");
+  }
+
   return getAllRolesOfStore(storeId);
+};
+
+export const getAllRolesWithPermissionOfStoreService = async (storeId: string, userId: string) => {
+  const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+
+  if (!userMemberOfStore) {
+    throw new ForbiddenError(
+      "You are not allowed to view roles and permissions of the store that you are not member of!",
+    );
+  }
+
+  return getAllRolesWithPermissionOfStore(storeId);
+};
+
+export const getPermissionOfRolesService = async (storeId: string, roleId: string, userId: string) => {
+  const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+
+  if (!userMemberOfStore) {
+    throw new ForbiddenError(
+      "You are not allowed to view permissions of roles of the store that you are not member of!",
+    );
+  }
+
+  return getRolesWithPermission(roleId);
 };

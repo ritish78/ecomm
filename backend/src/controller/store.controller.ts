@@ -9,6 +9,11 @@ import {
   deleteProductByIdService,
   getProductsService,
 } from "../services/product.services";
+import {
+  getAllRolesOfStoreService,
+  getAllRolesWithPermissionOfStoreService,
+  getPermissionOfRolesService,
+} from "../services/roles.service";
 
 /**
  * @route               /api/v1/stores
@@ -119,6 +124,64 @@ export const getAllProductsOfStoreController = async (req: Request, res: Respons
     const products = await getProductsService(userInputFilters);
 
     return res.status(200).send({ message: "Products of store retrieved successfully!", products });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @route                 /api/v1/stores/:storeId/roles
+ * @method                GET
+ * @description           Get all roles of a store
+ * @access                Authenticate
+ */
+export const getAllRolesOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const userId = req.user?.id as string;
+
+    const roles = await getAllRolesOfStoreService(storeId, userId);
+
+    return res.status(200).send({ message: "Roles of store retrieved successfully!", roles });
+  } catch (error) {
+    next(error)
+  }
+};
+
+/**
+ * @route               /api/v1/stores/:storeId/roles-permissions
+ * @method              GET
+ * @description         Get all roles with permission of a store
+ * @access              Authenticate
+ */
+export const getAllRolesWithPermissionOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const userId = req.user?.id as string;
+
+    const roles = await getAllRolesWithPermissionOfStoreService(storeId, userId);
+
+    return res.status(200).send({ message: "Roles and permissions of store retrieved successfully!", roles })
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @route               /api/v1/stores/:storeId/roles/:roleId/permissions 
+ * @method              GET
+ * @description         Get permissions of role
+ * @access              Authenticate
+ */
+export const getPermissionOfRoleController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const roleId = req.params.roleId as string;
+    const userId = req.user?.id as string;
+
+    const permissions = await getPermissionOfRolesService(storeId, roleId, userId);
+    
+    return res.status(200).send({ message: "Permission of role retrieved successfully!", permissions })
   } catch (error) {
     next(error);
   }
