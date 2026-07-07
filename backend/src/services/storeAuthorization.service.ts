@@ -22,7 +22,7 @@ export const assertCanActOnRole = async (currentUserId: string, storeId: string,
   const targetRole = await getRolesWithPermission(targetRoleId);
 
   if (!targetRole) {
-    throw new NotFoundError("Role to assign not found!");
+    throw new NotFoundError("Role not found!");
   }
 
   const currentUserPermission = new Set(currentUserMembership.permissions);
@@ -32,7 +32,9 @@ export const assertCanActOnRole = async (currentUserId: string, storeId: string,
     currentUserMembership.roleId !== targetRoleId;
 
   if (!targetIsStrictSubset) {
-    throw new ForbiddenError("You are not allowed to assign users with more or same permsission as you!");
+    throw new ForbiddenError(
+      "You are not allowed to make changes to users with more or same permsission as you!",
+    );
   }
 };
 

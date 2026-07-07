@@ -63,9 +63,11 @@ export const updateRolePermissionController = async (req: Request, res: Response
  */
 export const deleteRoleController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const storeId = req.params.storeId as string;
     const roleId = req.params.roleId as string;
+    const userId = req.user?.id as string;
 
-    const role = await deleteRoleByIdService(roleId);
+    const role = await deleteRoleByIdService(roleId, userId, storeId);
 
     return res.status(200).send({ message: `Role of id ${roleId} deleted successfully!`, role })
   } catch (error) {

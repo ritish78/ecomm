@@ -14,6 +14,7 @@ import {
 } from "../repository/roles.repository";
 import { isUserMemberOfStore } from "../repository/storeMembers.repository";
 import { BadRequestError, ConflictError, ForbiddenError } from "../utils/error";
+import { assertCanActOnRole } from "./storeAuthorization.service";
 
 //replaces the roles permission with new permissions. first, we check to see
 //if all the permission keys e.g. products:create key exists in our table or not
@@ -136,14 +137,17 @@ export const getPermissionOfRolesService = async (storeId: string, roleId: strin
 };
 
 
-export const deleteRoleByIdService = async (roleId: string) => {
+export const deleteRoleByIdService = async (roleId: string, userId: string, storeId: string) => {
   //unlike in the function above, getPermissionOfRolesService, we don't need to check
   //if the user is a member of the store. For getPermissionOfRolesService, users that
   //are member of the store were allowed to view permissions of roles.
   //but in this function, a middleware requirePermission("roles:delete") runs and checks
   //if the user has permission to delete the role using repository function hasStorePermission
 
-  //first, we need to check how many users are given this role.
+  //first, lets check if the user is trying to delete role that is higher than them
+  await assertCanActOnRole(userId, storeId, roleId);
+
+  //then, we need to check how many users are given this role.
   const numberOfMembersOfProvidedRole = await countMemberWithRole(roleId);
 
   if (numberOfMembersOfProvidedRole > 0) {
