@@ -31,3 +31,12 @@ export const isUserMemberOfStore = async (storeId: string, userId: string) => {
 
   return Boolean(userFromStore);
 };
+
+export const removeMemberFromStore = async (storeId: string, userId: string) => {
+  const [removedUser] = await db
+    .delete(storeMembers)
+    .where(and(eq(storeMembers.storeId, storeId), eq(storeMembers.userId, userId)))
+    .returning();
+
+  return removedUser;
+};

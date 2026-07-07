@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { addMemberSchema } from "../schema/storeMembers.schema";
-import { addMemberToStoreService, createStoreService } from "../services/store.service";
+import {
+  addMemberToStoreService,
+  createStoreService,
+  removeMemberFromStoreService,
+} from "../services/store.service";
 import { AuthError } from "../utils/error";
 import { createStoreSchema } from "../schema/store.schema";
 import { CreateProductInput, filterProductSchema } from "../schema/product.schema";
@@ -181,6 +185,26 @@ export const getPermissionOfRoleController = async (req: Request, res: Response,
     const permissions = await getPermissionOfRolesService(storeId, roleId, userId);
     
     return res.status(200).send({ message: "Permission of role retrieved successfully!", permissions })
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @route               /api/v1/stores/:storeId/members/:userId 
+ * @method              DELETE
+ * @description         Remove a user from a store
+ * @access              members:remove
+ */
+export const removeUserFromStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const targetUserId = req.params.userId as string;
+    const currentUserId = req.user?.id as string;
+
+    const user = await removeMemberFromStoreService(storeId, currentUserId, targetUserId);
+
+      return res.status(200).send({ message: "Member removed successfully!", user })
   } catch (error) {
     next(error);
   }

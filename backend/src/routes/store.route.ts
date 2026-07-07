@@ -10,6 +10,7 @@ import {
   getAllRolesOfStoreController,
   getAllRolesWithPermissionOfStoreController,
   getPermissionOfRoleController,
+  removeUserFromStoreController,
 } from "../controller/store.controller";
 import {
   createRoleController,
@@ -34,6 +35,12 @@ router.post(
 );
 
 router.post("/:storeId/members", authenticate, requirePermission("members:add"), addMembersController);
+router.delete(
+  "/:storeId/members/:userId",
+  authenticate,
+  requirePermission("members:remove"),
+  removeUserFromStoreController,
+);
 
 router.post("/:storeId/roles", authenticate, requirePermission("roles:create"), createRoleController);
 router.delete(

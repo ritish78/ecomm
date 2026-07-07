@@ -2,11 +2,19 @@ import { Permissions } from "../config/permissions";
 import db from "../db";
 import { findUserByEmail } from "../repository/auth.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
-import { createStore, hasStorePermission } from "../repository/store.repository";
-import { addMemberToStore, isUserMemberOfStore } from "../repository/storeMembers.repository";
-import { ConflictError, NotFoundError } from "../utils/error";
+import {
+  createStore,
+  getStoreMembershipWithPermission,
+  hasStorePermission,
+} from "../repository/store.repository";
+import {
+  addMemberToStore,
+  isUserMemberOfStore,
+  removeMemberFromStore,
+} from "../repository/storeMembers.repository";
+import { ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
-import { assertCanActOnRole } from "./storeAuthorization.service";
+import { assertCanActOnMember, assertCanActOnRole } from "./storeAuthorization.service";
 
 /**
  * @param {string} userId - id of the user creating the store
@@ -89,4 +97,37 @@ export const addMemberToStoreService = async (
   //the new member does not have higher or same level of role/permissions
   //of the user, then we add the new member to the store.
   return addMemberToStore(storeId, userFromDatabase.id, roleId);
+};
+
+
+export const removeMemberFromStoreService = async (
+  storeId: string,
+  currentUserId: string,
+  targetUserId: string,
+) => {
+  //checking to see if the user wants to remove themselves from the store
+  if (currentUserId === targetUserId) {
+    throw new ForbiddenError("You are not allowed to remove yourself from the store!");
+  }
+
+  const userIsMember = await isUserMemberOfStore(storeId, targetUserId);
+
+  if (!userIsMember) {
+    throw new NotFoundError("User to remove is not member of this store!");
+  }
+
+  //checking to see if the current user is trying to remove user that is above them
+  await assertCanActOnMember(currentUserId, storeId, targetUserId);
+
+  const targetUserMembership = await getStoreMembershipWithPermission(targetUserId, storeId);
+
+  //checking to see if the current user is trying to remove owner of the store.
+  //only owner has store:remove, store:edit permission. so using store:remove
+  const targetIsOwnerOfStore = targetUserMembership?.permissions.includes("store:remove");
+
+  if (targetIsOwnerOfStore) {
+    throw new ForbiddenError("You can not remove owner of the store! Contact admin of this app!");
+  }
+
+  return removeMemberFromStore(storeId, targetUserId);
 };
