@@ -60,7 +60,6 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
     }
 
     const userInput = addMemberSchema.parse(req.body);
-
     const member = await addMemberToStoreService(currentUserId, storeId, userInput.email, userInput.roleId);
 
     return res.status(200).send({ message: "Member added successfully!", member });

@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { createRoleSchema, updateRolePermissionSchema } from "../schema/role.schema";
-import { createRoleForStoreService, updateRolePermissionService } from "../services/roles.service";
+import {
+  createRoleForStoreService,
+  deleteRoleByIdService,
+  updateRolePermissionService,
+} from "../services/roles.service";
 import { BadRequestError } from "../utils/error";
 
 /**
@@ -46,6 +50,24 @@ export const updateRolePermissionController = async (req: Request, res: Response
     );
 
     return res.status(200).send({ message: "Updated role successfully!", role });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route                 /stores/:storeId/roles/:roleId
+ * @method                DELETE
+ * @description           delete a role of a store
+ * @access                roles:delete
+ */
+export const deleteRoleController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const roleId = req.params.roleId as string;
+
+    const role = await deleteRoleByIdService(roleId);
+
+    return res.status(200).send({ message: `Role of id ${roleId} deleted successfully!`, role })
   } catch (error) {
     next(error);
   }

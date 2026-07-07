@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import db, { Tx } from "../db";
 import { permission } from "../models/permission.model";
 import { roles } from "../models/roles.model";
@@ -121,7 +121,7 @@ export const getAllRolesWithPermissionOfStore = async (storeId: string) => {
     id: role.id,
     name: role.name,
     storeId: role.storeId,
-    permissions: permissionsByRoleId[role.id] ?? [] //without null coalescing, it was returning without permissions key in json if there was no permission for a role
+    permissions: permissionsByRoleId[role.id] ?? [], //without null coalescing, it was returning without permissions key in json if there was no permission for a role
   }));
 };
 
@@ -160,4 +160,25 @@ export const getGlobalOwnerRole = async (tx: Tx) => {
     .limit(1);
 
   return ownerRole;
+};
+
+export const deleteRoleById = async (roleId: string) => {
+  const [deletedRole] = await db
+    .delete(roles)
+    .where(and(isNotNull(roles.storeId), eq(roles.id, roleId)))
+    .returning();
+
+  return deletedRole;
+};
+
+export const countMemberWithRole = async (roleId: string) => {
+  const rows = await db
+    .select({ id: storeMembers.id })
+    .from(storeMembers)
+    .where(eq(storeMembers.roleId, roleId));
+  //for where statement, we are only using roleId we could also also
+  //and(eq(storeMembers.storeId, storeId)) after passing storeId
+  // like in deleteRoleById, but roleId is already unique.
+
+  return rows.length;
 };

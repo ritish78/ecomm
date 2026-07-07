@@ -1,7 +1,9 @@
 import { Permissions } from "../config/permissions";
 import db from "../db";
 import {
+  countMemberWithRole,
   createCustomRoles,
+  deleteRoleById,
   deleteRolePermissions,
   getAllRolesOfStore,
   getAllRolesWithPermissionOfStore,
@@ -11,7 +13,7 @@ import {
   insertRolePermission,
 } from "../repository/roles.repository";
 import { isUserMemberOfStore } from "../repository/storeMembers.repository";
-import { BadRequestError, ForbiddenError } from "../utils/error";
+import { BadRequestError, ConflictError, ForbiddenError } from "../utils/error";
 
 //replaces the roles permission with new permissions. first, we check to see
 //if all the permission keys e.g. products:create key exists in our table or not
@@ -111,6 +113,7 @@ export const getAllRolesOfStoreService = async (storeId: string, userId: string)
 export const getAllRolesWithPermissionOfStoreService = async (storeId: string, userId: string) => {
   const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
 
+  //TODO: need to implement to not throw error for admins
   if (!userMemberOfStore) {
     throw new ForbiddenError(
       "You are not allowed to view roles and permissions of the store that you are not member of!",
@@ -130,4 +133,24 @@ export const getPermissionOfRolesService = async (storeId: string, roleId: strin
   }
 
   return getRolesWithPermission(roleId);
+};
+
+
+export const deleteRoleByIdService = async (roleId: string) => {
+  //unlike in the function above, getPermissionOfRolesService, we don't need to check
+  //if the user is a member of the store. For getPermissionOfRolesService, users that
+  //are member of the store were allowed to view permissions of roles.
+  //but in this function, a middleware requirePermission("roles:delete") runs and checks
+  //if the user has permission to delete the role using repository function hasStorePermission
+
+  //first, we need to check how many users are given this role.
+  const numberOfMembersOfProvidedRole = await countMemberWithRole(roleId);
+
+  if (numberOfMembersOfProvidedRole > 0) {
+    throw new ConflictError(
+      `Currently, there are ${numberOfMembersOfProvidedRole} members of provided role to delete. First, reassign them to another role to delete this role!`,
+    );
+  }
+
+  return deleteRoleById(roleId);
 };

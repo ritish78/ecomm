@@ -11,7 +11,11 @@ import {
   getAllRolesWithPermissionOfStoreController,
   getPermissionOfRoleController,
 } from "../controller/store.controller";
-import { createRoleController, updateRolePermissionController } from "../controller/role.controller";
+import {
+  createRoleController,
+  deleteRoleController,
+  updateRolePermissionController,
+} from "../controller/role.controller";
 
 const router = Router();
 
@@ -32,6 +36,12 @@ router.post(
 router.post("/:storeId/members", authenticate, requirePermission("members:add"), addMembersController);
 
 router.post("/:storeId/roles", authenticate, requirePermission("roles:create"), createRoleController);
+router.delete(
+  "/:storeId/roles/:roleId",
+  authenticate,
+  requirePermission("roles:remove"),
+  deleteRoleController,
+);
 
 router.patch(
   "/:storeId/roles/:roleId/permission",
