@@ -10,6 +10,7 @@ import {
   getAllRolesOfStoreController,
   getAllRolesWithPermissionOfStoreController,
   getPermissionOfRoleController,
+  getStoreByIdOrSlugController,
   removeUserFromStoreController,
 } from "../controller/store.controller";
 import {
@@ -22,6 +23,7 @@ const router = Router();
 
 router.post("/", authenticate, createStoreController);
 
+router.get("/:identifier", getStoreByIdOrSlugController);
 router.get("/:storeId/products", getAllProductsOfStoreController);
 router.get("/:storeId/roles", authenticate, getAllRolesOfStoreController);
 router.get("/:storeId/roles-permissions", authenticate, getAllRolesWithPermissionOfStoreController);

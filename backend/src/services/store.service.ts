@@ -4,6 +4,7 @@ import { findUserByEmail } from "../repository/auth.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
 import {
   createStore,
+  findStoreByIdOrSlug,
   getStoreMembershipWithPermission,
   hasStorePermission,
 } from "../repository/store.repository";
@@ -130,4 +131,15 @@ export const removeMemberFromStoreService = async (
   }
 
   return removeMemberFromStore(storeId, targetUserId);
+};
+
+
+export const getStoreByIdOrSlugService = async (identifier: string) => {
+  const store = await findStoreByIdOrSlug(identifier);
+
+  if (!store) {
+    throw new NotFoundError(`Store of id/slug ${identifier} not found!`);
+  }
+
+  return store;
 };

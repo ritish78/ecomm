@@ -3,9 +3,10 @@ import { addMemberSchema } from "../schema/storeMembers.schema";
 import {
   addMemberToStoreService,
   createStoreService,
+  getStoreByIdOrSlugService,
   removeMemberFromStoreService,
 } from "../services/store.service";
-import { AuthError } from "../utils/error";
+import { AuthError, BadRequestError } from "../utils/error";
 import { createStoreSchema } from "../schema/store.schema";
 import { CreateProductInput, filterProductSchema } from "../schema/product.schema";
 import {
@@ -205,6 +206,26 @@ export const removeUserFromStoreController = async (req: Request, res: Response,
     const user = await removeMemberFromStoreService(storeId, currentUserId, targetUserId);
 
       return res.status(200).send({ message: "Member removed successfully!", user })
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @route               /api/v1/stores/:identifier
+ * @method              GET
+ * @description         Get store details by its id or slug
+ * @access              Public
+ */
+export const getStoreByIdOrSlugController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.params.identifier) {
+      throw new BadRequestError("Invalid store identifier provided!");
+    }
+
+    const store = await getStoreByIdOrSlugService(req.params.identifier as string);
+
+    return res.status(200).send({ message: "Store retrieved successfully!", store });
   } catch (error) {
     next(error);
   }

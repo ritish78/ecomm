@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Permissions } from "../config/permissions";
 import db, { Tx } from "../db";
 import { permission } from "../models/permission.model";
@@ -6,6 +6,9 @@ import { rolePermission } from "../models/rolePermission.model";
 import { storeMembers } from "../models/storeMembers.model";
 import { roles } from "../models/roles.model";
 import { stores } from "../models/store.model";
+import isUuid from "../utils/isUuid";
+import { products } from "../models/products.model";
+import { storeProducts } from "../models/storeProducts.model";
 
 /**
  * @param {Tx} tx - database transaction or a database connection
@@ -100,4 +103,26 @@ export const getStoreMembershipWithPermission = async (userId: string, storeId: 
     roleId: rows[0].roleId,
     permissions: rows.map((row) => row.permissionKey),
   };
+};
+
+export const findStoreByIdOrSlug = async (identifier: string) => {
+  const isIdentifierUuid = isUuid(identifier);
+
+  const [store] = await db
+    .select()
+    .from(stores)
+    .where(isIdentifierUuid ? eq(stores.id, identifier) : eq(stores.slug, identifier));
+
+  if (!store) {
+    return null;
+  }
+
+  //after confirming that the store exists, we also get the number of products that it is selling
+  const [productCount] = await db
+    .select({ totalProducts: sql<number>`COUNT (*)` })
+    .from(storeProducts)
+    .innerJoin(products, eq(products.id, storeProducts.productId))
+    .where(and(eq(storeProducts.storeId, store.id), eq(products.isActive, true)));
+
+  return { ...store, productCount };
 };

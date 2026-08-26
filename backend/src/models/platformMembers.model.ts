@@ -10,7 +10,7 @@ export const platformMembers = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" })
       .unique(),
-    role: varchar("role", { length: 50 }).notNull().unique(),
+    role: varchar("role", { length: 50 }).notNull(),
   },
   (table) => [index("platform_members_user_id_index").on(table.userId)],
 );
