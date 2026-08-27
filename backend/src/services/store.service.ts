@@ -4,6 +4,7 @@ import { findUserByEmail } from "../repository/auth.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
 import {
   createStore,
+  deleteStoreById,
   findStoreByIdOrSlug,
   getStoreMembershipWithPermission,
   hasStorePermission,
@@ -160,4 +161,18 @@ export const updateStoreByIdService = async (storeId: string, storeInfo: UpdateS
 
   return updateStoreById(storeId, storeInfo);
 };
+
+
+export const deleteStoreByIdService = async (storeId: string) => {
+  //same like in above updateStoreByIdService function, we are using
+  //findStoreByIdOrSlug function to check if the store of the provided id exists.
+  const store = await findStoreByIdOrSlug(storeId);
+
+  if (!store) {
+    throw new NotFoundError(`Store of id ${storeId} not found!`);
+  }
+
+  return deleteStoreById(storeId);
+};
+
 

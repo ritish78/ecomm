@@ -3,6 +3,7 @@ import { addMemberSchema } from "../schema/storeMembers.schema";
 import {
   addMemberToStoreService,
   createStoreService,
+  deleteStoreByIdService,
   getStoreByIdOrSlugService,
   removeMemberFromStoreService,
   updateStoreByIdService,
@@ -250,6 +251,26 @@ export const updateStoreController = async (req: Request, res: Response, next: N
     const updatedStore = await updateStoreByIdService(req.params.storeId as string, userInput);
 
     return res.status(200).send({ message: "Store updated successfully!", store: updatedStore });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * @route              /api/v1/stores/:storeId
+ * @method             DELETE
+ * @description        Delete store by its id
+ * @access             store:remove 
+ */
+export const deleteStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.params.storeId || !isUuid(req.params.storeId as string)) {
+      throw new BadRequestError("Invalid store id provided!");
+    }
+
+    const deletedStore = await deleteStoreByIdService(req.params.storeId as string);
+
+    return res.status(200).send({ message: "Store deleted successfully!", store: deletedStore });
   } catch (error) {
     next(error);
   }

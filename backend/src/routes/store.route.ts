@@ -6,6 +6,7 @@ import {
   createProductListingController,
   createStoreController,
   deleteProductListingController,
+  deleteStoreController,
   getAllProductsOfStoreController,
   getAllRolesOfStoreController,
   getAllRolesWithPermissionOfStoreController,
@@ -26,6 +27,7 @@ router.post("/", authenticate, createStoreController);
 
 router.get("/:identifier", getStoreByIdOrSlugController);
 router.patch("/:storeId", authenticate, requirePermission("store:edit"), updateStoreController);
+router.delete("/:storeId", authenticate, requirePermission("store:remove"), deleteStoreController);
 router.get("/:storeId/products", getAllProductsOfStoreController);
 router.get("/:storeId/roles", authenticate, getAllRolesOfStoreController);
 router.get("/:storeId/roles-permissions", authenticate, getAllRolesWithPermissionOfStoreController);

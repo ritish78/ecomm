@@ -167,3 +167,10 @@ export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInp
 
   return updatedStore;
 };  
+
+
+export const deleteStoreById = async (storeId: string) => {
+  const [deletedStore] = await db.delete(stores).where(eq(stores.id, storeId)).returning();
+
+  return deletedStore;
+};
