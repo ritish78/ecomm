@@ -10,6 +10,7 @@ import isUuid from "../utils/isUuid";
 import { products } from "../models/products.model";
 import { storeProducts } from "../models/storeProducts.model";
 import { UpdateStoreInput } from "../schema/store.schema";
+import { users } from "../models/users.model";
 
 /**
  * @param {Tx} tx - database transaction or a database connection
@@ -173,4 +174,27 @@ export const deleteStoreById = async (storeId: string) => {
   const [deletedStore] = await db.delete(stores).where(eq(stores.id, storeId)).returning();
 
   return deletedStore;
+};
+
+
+export const getAllMembersOfStore = async (storeId: string) => {
+  const members = await db
+    .select({
+      userId: storeMembers.userId,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      roleId: storeMembers.roleId,
+      role: roles.name,
+    })
+    .from(storeMembers)
+    .innerJoin(users, eq(users.id, storeMembers.userId))
+    .innerJoin(roles, eq(roles.id, storeMembers.roleId))
+    //Todo:
+    //should I also display what the permission of the roles are?
+    //if I don't want to display the roles, then we delete this todo.
+    .where(eq(storeMembers.storeId, storeId));
+
+  return members;
 };

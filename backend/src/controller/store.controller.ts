@@ -4,6 +4,7 @@ import {
   addMemberToStoreService,
   createStoreService,
   deleteStoreByIdService,
+  getAllMembersOfStoreService,
   getStoreByIdOrSlugService,
   removeMemberFromStoreService,
   updateStoreByIdService,
@@ -271,6 +272,26 @@ export const deleteStoreController = async (req: Request, res: Response, next: N
     const deletedStore = await deleteStoreByIdService(req.params.storeId as string);
 
     return res.status(200).send({ message: "Store deleted successfully!", store: deletedStore });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+/**
+ * @route              /api/v1/stores/:storeId/members
+ * @method             GET
+ * @description        Get all members of a store
+ * @access             Authenticate
+ */
+export const getAllMembersOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const userId = req.user?.id as string;
+
+    const members = await getAllMembersOfStoreService(storeId, userId);
+
+    return res.status(200).send({ message: "Members of store retrieved successfully!", members });
   } catch (error) {
     next(error);
   }

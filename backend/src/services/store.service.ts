@@ -6,6 +6,7 @@ import {
   createStore,
   deleteStoreById,
   findStoreByIdOrSlug,
+  getAllMembersOfStore,
   getStoreMembershipWithPermission,
   hasStorePermission,
   updateStoreById,
@@ -173,6 +174,17 @@ export const deleteStoreByIdService = async (storeId: string) => {
   }
 
   return deleteStoreById(storeId);
+};
+
+
+export const getAllMembersOfStoreService = async (storeId: string, userId: string) => {
+  const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+
+  if (!userMemberOfStore) {
+    throw new ForbiddenError("You are not allowed to view members of stores that you are not member of!");
+  }
+
+  return getAllMembersOfStore(storeId);
 };
 
 
