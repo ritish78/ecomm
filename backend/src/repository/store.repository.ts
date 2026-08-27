@@ -9,6 +9,7 @@ import { stores } from "../models/store.model";
 import isUuid from "../utils/isUuid";
 import { products } from "../models/products.model";
 import { storeProducts } from "../models/storeProducts.model";
+import { UpdateStoreInput } from "../schema/store.schema";
 
 /**
  * @param {Tx} tx - database transaction or a database connection
@@ -126,3 +127,43 @@ export const findStoreByIdOrSlug = async (identifier: string) => {
 
   return { ...store, productCount };
 };
+
+export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInput) => {
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+
+  //Now, adding any provided fields to the update data
+  if (storeInfo.description !== undefined) {
+    updateData.description = storeInfo.description;
+  }
+
+  if (storeInfo.logoUrl !== undefined) {
+    updateData.logoUrl = storeInfo.logoUrl;
+  }
+
+  if (storeInfo.isActive !== undefined) {
+    updateData.isActive = storeInfo.isActive;
+  }
+
+  if (storeInfo.name !== undefined) {
+    updateData.name = storeInfo.name;
+
+    //since the user changed the name of the store, we have two options for slug
+    //1. we keep the slug as it is since it describes the original store name
+    //2. we change the slug to match the store's new name.
+    //Currently, I am going with the first option as I don't want to have spam
+    //stores that might only take money from user for products and then change
+    //the name of the store to a different one.
+    //Or someone creates a store for say Baby products, and has good ratings
+    //and then changes to something different, say Electronics. The store might
+    //use their rankings from baby products to sell electronics and scam people.
+
+    //however, if we change the way that we want to implement the slug, we can
+    //const newSlug = toSlug(storeInfo.name);
+    //we also need to check if the slug is unique or not.
+    //and then update the slug of the store.
+  }
+
+  const [updatedStore] = await db.update(stores).set(updateData).where(eq(stores.id, storeId)).returning();
+
+  return updatedStore;
+};  

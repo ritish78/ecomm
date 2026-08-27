@@ -12,6 +12,7 @@ import {
   getPermissionOfRoleController,
   getStoreByIdOrSlugController,
   removeUserFromStoreController,
+  updateStoreController,
 } from "../controller/store.controller";
 import {
   createRoleController,
@@ -24,6 +25,7 @@ const router = Router();
 router.post("/", authenticate, createStoreController);
 
 router.get("/:identifier", getStoreByIdOrSlugController);
+router.patch("/:storeId", authenticate, requirePermission("store:edit"), updateStoreController);
 router.get("/:storeId/products", getAllProductsOfStoreController);
 router.get("/:storeId/roles", authenticate, getAllRolesOfStoreController);
 router.get("/:storeId/roles-permissions", authenticate, getAllRolesWithPermissionOfStoreController);

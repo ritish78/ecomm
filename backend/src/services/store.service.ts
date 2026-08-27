@@ -7,12 +7,14 @@ import {
   findStoreByIdOrSlug,
   getStoreMembershipWithPermission,
   hasStorePermission,
+  updateStoreById,
 } from "../repository/store.repository";
 import {
   addMemberToStore,
   isUserMemberOfStore,
   removeMemberFromStore,
 } from "../repository/storeMembers.repository";
+import { UpdateStoreInput } from "../schema/store.schema";
 import { ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
 import { assertCanActOnMember, assertCanActOnRole } from "./storeAuthorization.service";
@@ -143,3 +145,19 @@ export const getStoreByIdOrSlugService = async (identifier: string) => {
 
   return store;
 };
+
+
+export const updateStoreByIdService = async (storeId: string, storeInfo: UpdateStoreInput) => {
+  //using the above function findStoreByIdOrSlug to check if the store of the
+  //provided storeId exists or not. Currently, we are ony using the ID of the
+  //store but we are still using the findStoreByIdOrSlug function because we
+  //might use the slug of the store in the future.
+  const store = await findStoreByIdOrSlug(storeId);
+
+  if (!store) {
+    throw new NotFoundError(`Store of id ${storeId} not found!`);
+  }
+
+  return updateStoreById(storeId, storeInfo);
+};
+

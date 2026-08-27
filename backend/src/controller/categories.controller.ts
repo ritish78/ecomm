@@ -4,7 +4,6 @@ import {
   deleteCategoryService,
   getAllCategoriesServices,
   getCategoryByIdService,
-  getCategoryBySlugService,
   updateCategoryService,
 } from "../services/categories.service";
 import { createCategorySchema } from "../schema/categories.schema";

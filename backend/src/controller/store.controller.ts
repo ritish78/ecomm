@@ -5,9 +5,10 @@ import {
   createStoreService,
   getStoreByIdOrSlugService,
   removeMemberFromStoreService,
+  updateStoreByIdService,
 } from "../services/store.service";
 import { AuthError, BadRequestError } from "../utils/error";
-import { createStoreSchema } from "../schema/store.schema";
+import { createStoreSchema, updateStoreSchema } from "../schema/store.schema";
 import { CreateProductInput, filterProductSchema } from "../schema/product.schema";
 import {
   createProductService,
@@ -19,6 +20,7 @@ import {
   getAllRolesWithPermissionOfStoreService,
   getPermissionOfRolesService,
 } from "../services/roles.service";
+import isUuid from "../utils/isUuid";
 
 /**
  * @route               /api/v1/stores
@@ -230,3 +232,26 @@ export const getStoreByIdOrSlugController = async (req: Request, res: Response, 
     next(error);
   }
 }
+
+/**
+ * @route              /api/v1/stores/:storeId
+ * @method             PATCH
+ * @description        Update store details by its id
+ * @access             store:edit
+ */
+export const updateStoreController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.params.storeId || !isUuid(req.params.storeId as string)) {
+      throw new BadRequestError("Invalid store id provided!");
+    }
+
+    const userInput = updateStoreSchema.parse(req.body);
+
+    const updatedStore = await updateStoreByIdService(req.params.storeId as string, userInput);
+
+    return res.status(200).send({ message: "Store updated successfully!", store: updatedStore });
+  } catch (error) {
+    next(error);
+  }
+}
+
