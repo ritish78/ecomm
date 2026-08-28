@@ -163,7 +163,10 @@ export const updateStoreByIdService = async (storeId: string, storeInfo: UpdateS
   return updateStoreById(storeId, storeInfo);
 };
 
-
+//Todo:
+//on a second thougth while scrolling, it has been a while since I returned back to this project
+//should we delete the store outright? There will be products, orders and members associated to 
+//that store. By deleting the store, we are removing just the record of the table.
 export const deleteStoreByIdService = async (storeId: string) => {
   //same like in above updateStoreByIdService function, we are using
   //findStoreByIdOrSlug function to check if the store of the provided id exists.

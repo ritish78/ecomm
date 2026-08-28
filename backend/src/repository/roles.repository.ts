@@ -182,3 +182,13 @@ export const countMemberWithRole = async (roleId: string) => {
 
   return rows.length;
 };
+
+export const updateRoleName = async (roleId: string, roleName: string) => {
+  const [updatedRole] = await db
+    .update(roles)
+    .set({ name: roleName })
+    .where(eq(roles.id, roleId))
+    .returning();
+
+  return updatedRole;
+};

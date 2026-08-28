@@ -11,9 +11,11 @@ import {
   getRoleById,
   getRolesWithPermission,
   insertRolePermission,
+  updateRoleName,
 } from "../repository/roles.repository";
 import { isUserMemberOfStore } from "../repository/storeMembers.repository";
-import { BadRequestError, ConflictError, ForbiddenError } from "../utils/error";
+import { UpdateRoleInput } from "../schema/role.schema";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
 import { assertCanActOnRole } from "./storeAuthorization.service";
 
 //replaces the roles permission with new permissions. first, we check to see
@@ -157,4 +159,33 @@ export const deleteRoleByIdService = async (roleId: string, userId: string, stor
   }
 
   return deleteRoleById(roleId);
+};
+
+
+export const updateRoleByIdService = async (roleId: string, storeId: string, roleInfo: UpdateRoleInput) => {
+  const roleFromDatabase = await getRoleById(roleId);
+
+  if (!roleFromDatabase) {
+    throw new NotFoundError(`Role of id ${roleId} not found!`);
+  }
+
+  //currently, when a role has storeId as null it means that the role is throughout
+  //the application. For e.g. admin, owner, manager, moderator, and storeMan.
+  //we are not going to update these roles. If a user wants to modify the name or
+  //permissions they need to create another role with the permissions that they want
+  //to assign and then only they should assign that role to the user.
+  //we won't allow to modify the application roles as it will change it for all users.
+  if (roleFromDatabase.storeId === null) {
+    throw new ForbiddenError(
+      "You are not allowed to change the built in roles. Create another role and assign users with the permissions that you want!",
+    );
+  }
+
+  if (roleFromDatabase.storeId !== storeId) {
+    throw new NotFoundError("Provided role to update does not exists in this store!");
+  }
+
+  const updatedRole = await updateRoleName(roleId, roleInfo.name);
+
+  return updatedRole;
 };

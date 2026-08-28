@@ -10,6 +10,10 @@ export const createRoleSchema = z
   })
   .strict();
 
+  export const updateRoleSchema = z.object({
+    name: z.string().min(1, { error: "Please enter atleast one character for the new role name!" }),
+  });
+
 export const updateRolePermissionSchema = z
   .object({
     permissionKeys: z
@@ -18,5 +22,7 @@ export const updateRolePermissionSchema = z
   })
   .strict();
 
+
 export type CreateRoleInput = z.infer<typeof createRoleSchema>;
+export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type UpdateRolePermissionInput = z.infer<typeof updateRolePermissionSchema>;

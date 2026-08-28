@@ -19,6 +19,7 @@ import {
 import {
   createRoleController,
   deleteRoleController,
+  updateNameOfRoleController,
   updateRolePermissionController,
 } from "../controller/role.controller";
 
@@ -56,6 +57,13 @@ router.delete(
   authenticate,
   requirePermission("roles:remove"),
   deleteRoleController,
+);
+
+router.patch(
+  "/:storeId/roles/:roleId",
+  authenticate,
+  requirePermission("roles:update"),
+  updateNameOfRoleController,
 );
 
 router.patch(
