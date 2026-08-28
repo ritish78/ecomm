@@ -13,6 +13,7 @@ import {
   insertRolePermission,
   updateRoleName,
 } from "../repository/roles.repository";
+import { getStoreMembershipWithPermission } from "../repository/store.repository";
 import { isUserMemberOfStore } from "../repository/storeMembers.repository";
 import { UpdateRoleInput } from "../schema/role.schema";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
@@ -77,11 +78,16 @@ export const createRoleForStoreService = async (
  * @returns {Promise<roles>} - the updated role with granted permissions
  */
 export const updateRolePermissionService = async (
+  currentUserId: string,
   storeId: string,
   roleId: string,
   permissionKeys: Permissions[],
 ) => {
   const role = await getRoleById(roleId);
+
+  if (!role) {
+    throw new NotFoundError("Could not find the requested role!");
+  }
 
   if (role.storeId === null) {
     throw new BadRequestError("Can not update the global role!");
@@ -89,6 +95,20 @@ export const updateRolePermissionService = async (
 
   if (role.storeId !== storeId) {
     throw new BadRequestError("Can not update the role of another store!");
+  }
+
+  //Now checking the heirarchy of the user and the role that the current user wants to update
+  await assertCanActOnRole(currentUserId, storeId, roleId);
+
+  //Then checking to see if the current user can grant every permission that they are trying to assing
+  const currentUserMembership = await getStoreMembershipWithPermission(currentUserId, storeId);
+  const currentUserPermissions = new Set(currentUserMembership?.permissions);
+
+  const extraPermissions = permissionKeys.filter((perm) => !currentUserPermissions.has(perm));
+  if (extraPermissions.length > 0) {
+    throw new ForbiddenError(
+      `You can not grant permissions(${extraPermissions.join(", ")}) that you do not have yourself!`,
+    );
   }
 
   const grantedKeys = await setRolePermissionService(roleId, permissionKeys);

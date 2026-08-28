@@ -40,15 +40,13 @@ export const createRoleController = async (req: Request, res: Response, next: Ne
  */
 export const updateRolePermissionController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { storeId, roleId } = req.params;
+    const userId = req.user?.id as string;
+    const storeId = req.params.storeId as string;
+    const roleId = req.params.roleId as string;
 
     const userInput = updateRolePermissionSchema.parse(req.body);
 
-    const role = await updateRolePermissionService(
-      storeId as string,
-      roleId as string,
-      userInput.permissionKeys,
-    );
+    const role = await updateRolePermissionService(userId, storeId, roleId, userInput.permissionKeys);
 
     return res.status(200).send({ message: "Updated role successfully!", role });
   } catch (error) {
