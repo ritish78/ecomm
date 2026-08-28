@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Permissions } from "../config/permissions";
 import db, { Tx } from "../db";
 import { permission } from "../models/permission.model";
@@ -167,15 +167,13 @@ export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInp
   const [updatedStore] = await db.update(stores).set(updateData).where(eq(stores.id, storeId)).returning();
 
   return updatedStore;
-};  
-
+};
 
 export const deleteStoreById = async (storeId: string) => {
   const [deletedStore] = await db.delete(stores).where(eq(stores.id, storeId)).returning();
 
   return deletedStore;
 };
-
 
 export const getAllMembersOfStore = async (storeId: string) => {
   const members = await db
@@ -191,10 +189,46 @@ export const getAllMembersOfStore = async (storeId: string) => {
     .from(storeMembers)
     .innerJoin(users, eq(users.id, storeMembers.userId))
     .innerJoin(roles, eq(roles.id, storeMembers.roleId))
-    //Todo:
-    //should I also display what the permission of the roles are?
-    //if I don't want to display the roles, then we delete this todo.
     .where(eq(storeMembers.storeId, storeId));
 
-  return members;
+  if (members.length === 0) return [];
+
+  const roleIds = [...new Set(members.map((member) => member.roleId))];
+
+  //now, we get all permissions at once for all roles to avoid N+1 query problem
+  const rolePermissions = await db
+    .select({ roleId: rolePermission.roleId, permissionKey: permission.key })
+    .from(rolePermission)
+    .innerJoin(permission, eq(permission.id, rolePermission.permissionId))
+    .where(inArray(rolePermission.roleId, roleIds));
+
+  //now, we create a map of roleId to permissions
+  const rolePermissionsMap = new Map<string, string[]>();
+
+  for (const { roleId, permissionKey } of rolePermissions) {
+    if (!rolePermissionsMap.has(roleId)) {
+      rolePermissionsMap.set(roleId, []);
+    }
+    rolePermissionsMap.get(roleId)?.push(permissionKey);
+  }
+
+  //now, we add the permissions to each member based on their roleId
+  return members.map((member) => ({
+    userId: member.userId,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    email: member.email,
+    avatarUrl: member.avatarUrl,
+    // roleId: member.roleId,
+    // role: member.role,
+    // permissions: rolePermissionsMap.get(member.roleId) || [],
+    //should I have role and permissions key separate or should it be inside an object?
+    //the one for separate role and permissions is commented line above and
+    //the one inside an object is in the line below
+    role: {
+      id: member.roleId,
+      name: member.role,
+      permissions: rolePermissionsMap.get(member.roleId) || [],
+    },
+  }));
 };
