@@ -1,5 +1,6 @@
 import { Permissions } from "../config/permissions";
 import db from "../db";
+import { hasPlatformRole } from "../repository/platformMember.repository";
 import {
   countMemberWithRole,
   createCustomRoles,
@@ -123,7 +124,14 @@ export const updateRolePermissionService = async (
  * @returns {Promise<roles[]>} - the retrieved roles of the store
  */
 export const getAllRolesOfStoreService = async (storeId: string, userId: string) => {
-  //first, lets check that if the current user is member of the store
+  //first, lets check that if the current user is an admin
+  const isUserAdmin = await hasPlatformRole(userId, "admin");
+
+  if (isUserAdmin) {
+    return getAllRolesOfStore(storeId);
+  }
+
+  //then, lets check that if the current user is member of the store
   const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
 
   if (!userMemberOfStore) {
@@ -134,9 +142,15 @@ export const getAllRolesOfStoreService = async (storeId: string, userId: string)
 };
 
 export const getAllRolesWithPermissionOfStoreService = async (storeId: string, userId: string) => {
+  //first, lets check that if the current user is an admin
+  const isUserAdmin = await hasPlatformRole(userId, "admin");
+
+  if (isUserAdmin) {
+    return getAllRolesWithPermissionOfStore(storeId);
+  }
+
   const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
 
-  //TODO: need to implement to not throw error for admins
   if (!userMemberOfStore) {
     throw new ForbiddenError(
       "You are not allowed to view roles and permissions of the store that you are not member of!",
@@ -144,19 +158,34 @@ export const getAllRolesWithPermissionOfStoreService = async (storeId: string, u
   }
 
   return getAllRolesWithPermissionOfStore(storeId);
-};
+};;;;;
 
 export const getPermissionOfRolesService = async (storeId: string, roleId: string, userId: string) => {
-  const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+  //first, lets check that if the current user is an admin
+  const isUserAdmin = await hasPlatformRole(userId, "admin");
 
-  if (!userMemberOfStore) {
-    throw new ForbiddenError(
-      "You are not allowed to view permissions of roles of the store that you are not member of!",
-    );
+  if (!isUserAdmin) {
+    const userMemberOfStore = await isUserMemberOfStore(storeId, userId);
+
+    if (!userMemberOfStore) {
+      throw new ForbiddenError(
+        "You are not allowed to view permissions of roles of the store that you are not member of!",
+      );
+    }
   }
 
-  return getRolesWithPermission(roleId);
-};
+  const role = await getRolesWithPermission(roleId);
+
+  if (!role) {
+    throw new NotFoundError("Role not found!");
+  }
+
+  if (role.storeId !== null && role.storeId !== storeId) {
+    throw new NotFoundError("Role not found!");
+  }
+
+  return role;
+};;
 
 
 export const deleteRoleByIdService = async (roleId: string, userId: string, storeId: string) => {

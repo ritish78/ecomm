@@ -20,7 +20,7 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
           New here?{" "}
           <a
-            href="/signup"
+            href="/register"
             className="text-emerald-500 hover:text-emerald-800 font-medium"
           >
             Create an account here!

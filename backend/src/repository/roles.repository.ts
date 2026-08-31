@@ -95,6 +95,8 @@ export const getAllRolesOfStore = async (storeId: string) => {
 export const getAllRolesWithPermissionOfStore = async (storeId: string) => {
   const storeRoles = await getAllRolesOfStore(storeId);
 
+  if (storeRoles.length === 0) return [];
+
   const roleIds = storeRoles.map((role) => role.id);
 
   const allPermissions = await db

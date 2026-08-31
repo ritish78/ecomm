@@ -8,7 +8,7 @@ export default function proxy(request: NextRequest) {
   const userHasToken = accessToken || refreshToken;
 
   if (
-    (pathname.startsWith("/login") || pathname.startsWith("register")) &&
+    (pathname.startsWith("/login") || pathname.startsWith("/register")) &&
     userHasToken
   ) {
     return NextResponse.redirect(new URL("/", request.url));
