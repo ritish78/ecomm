@@ -33,7 +33,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/stores", storeRoutes);
 app.use("/api/v1/brands", brandRoutes);
-app.use("/api/v1/categoires", categoriesRoutes);
+app.use("/api/v1/categories", categoriesRoutes);
 
 app.use(errorHandler);
 

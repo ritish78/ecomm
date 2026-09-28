@@ -158,7 +158,7 @@ export const getAllRolesWithPermissionOfStoreService = async (storeId: string, u
   }
 
   return getAllRolesWithPermissionOfStore(storeId);
-};;;;;
+};
 
 export const getPermissionOfRolesService = async (storeId: string, roleId: string, userId: string) => {
   //first, lets check that if the current user is an admin
@@ -185,7 +185,7 @@ export const getPermissionOfRolesService = async (storeId: string, roleId: strin
   }
 
   return role;
-};;
+};
 
 
 export const deleteRoleByIdService = async (roleId: string, userId: string, storeId: string) => {
