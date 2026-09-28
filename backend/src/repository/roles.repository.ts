@@ -16,8 +16,8 @@ import { USER_ROLES } from "../config/roles";
  * @param {string} name - name of the role to create
  * @returns {Promise<roles>} - the created role
  */
-export const createCustomRoles = async (storeId: string, name: string) => {
-  const [role] = await db.insert(roles).values({ storeId, name }).returning();
+export const createCustomRoles = async (storeId: string, name: string, tx: Tx) => {
+  const [role] = await tx.insert(roles).values({ storeId, name }).returning();
 
   return role;
 };
@@ -87,6 +87,11 @@ export const getAllRolesOfStore = async (storeId: string) => {
     .select()
     .from(roles)
     .where(or(eq(roles.storeId, storeId), isNull(roles.storeId)));
+};
+
+
+export const getAllPermissions = async () => {
+  return db.select().from(permission).orderBy(permission.key);
 };
 
 /**

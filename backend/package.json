@@ -10,7 +10,8 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:run": "tsx src/db/migrate.ts",
     "migrate:push": "drizzle-kit push",
-    "seed": "tsx seed.ts"
+    "seed": "tsx seed.ts",
+    "test:permissions": "node --require tsx/cjs --test tests/permissions.test.cjs"
   },
   "keywords": [
     "ecommerce",

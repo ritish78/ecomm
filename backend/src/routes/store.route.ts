@@ -17,8 +17,10 @@ import {
   updateStoreController,
 } from "../controller/store.controller";
 import {
+  assignMemberRoleController,
   createRoleController,
   deleteRoleController,
+  getStorePermissionCatalogController,
   updateNameOfRoleController,
   updateRolePermissionController,
 } from "../controller/role.controller";
@@ -49,6 +51,15 @@ router.delete(
   authenticate,
   requirePermission("members:remove"),
   removeUserFromStoreController,
+);
+
+router.get("/:storeId/permissions", authenticate, getStorePermissionCatalogController);
+
+router.patch(
+  "/:storeId/members/:userId/role",
+  authenticate,
+  requirePermission("roles:assign"),
+  assignMemberRoleController,
 );
 
 router.post("/:storeId/roles", authenticate, requirePermission("roles:create"), createRoleController);

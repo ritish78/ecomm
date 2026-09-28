@@ -1,11 +1,12 @@
 import { Permissions } from "../config/permissions";
-import db from "../db";
+import db, { Tx } from "../db";
 import { hasPlatformRole } from "../repository/platformMember.repository";
 import {
   countMemberWithRole,
   createCustomRoles,
   deleteRoleById,
   deleteRolePermissions,
+  getAllPermissions,
   getAllRolesOfStore,
   getAllRolesWithPermissionOfStore,
   getPermissionByKeys,
@@ -13,12 +14,17 @@ import {
   getRolesWithPermission,
   insertRolePermission,
   updateRoleName,
+  updateRoleOfStoreMember,
 } from "../repository/roles.repository";
 import { getStoreMembershipWithPermission } from "../repository/store.repository";
 import { isUserMemberOfStore } from "../repository/storeMembers.repository";
 import { UpdateRoleInput } from "../schema/role.schema";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
-import { assertCanActOnRole } from "./storeAuthorization.service";
+import {
+  assertCanActOnMember,
+  assertCanActOnRole,
+  assertCanGrantPermissions,
+} from "./storeAuthorization.service";
 
 //replaces the roles permission with new permissions. first, we check to see
 //if all the permission keys e.g. products:create key exists in our table or not
@@ -29,30 +35,30 @@ import { assertCanActOnRole } from "./storeAuthorization.service";
  * @param {string[]} permissionKeys - array of permission keys to set for the role
  * @returns {Promise<string[]>} - the set permission keys for the role
  */
-export const setRolePermissionService = (roleId: string, permissionKeys: string[]) => {
-  return db.transaction(async (tx) => {
-    //we first get the ids of the permissionKeys
-    const matchedPermissions = await getPermissionByKeys(tx, permissionKeys);
+const setRolePermissionService = async (tx: Tx, roleId: string, inputKeys: string[]) => {
+  const permissionKeys = [...new Set(inputKeys)];
 
-    if (matchedPermissions.length !== permissionKeys.length) {
-      const foundKeys = new Set(matchedPermissions.map((perm) => perm.key));
-      const missing = permissionKeys.filter((key) => !foundKeys.has(key));
+  const matchedPermissions = await getPermissionByKeys(tx, permissionKeys);
 
-      throw new BadRequestError(
-        `Unknown permission${missing.length > 1 ? "s" : ""} provided: ${missing.join(", ")}`,
-      );
-    }
+  if (matchedPermissions.length !== permissionKeys.length) {
+    const foundKeys = new Set(matchedPermissions.map((perm) => perm.key));
 
-    await deleteRolePermissions(tx, roleId);
+    const missing = permissionKeys.filter((key) => !foundKeys.has(key));
 
-    await insertRolePermission(
-      tx,
-      roleId,
-      matchedPermissions.map((perm) => perm.id),
+    throw new BadRequestError(
+      `Unknown permission${missing.length > 1 ? "s" : ""} provided: ${missing.join(", ")}`,
     );
+  }
 
-    return matchedPermissions.map((perm) => perm.key);
-  });
+  await deleteRolePermissions(tx, roleId);
+
+  await insertRolePermission(
+    tx,
+    roleId,
+    matchedPermissions.map((perm) => perm.id),
+  );
+
+  return matchedPermissions.map((perm) => perm.key);
 };
 
 /**
@@ -62,14 +68,23 @@ export const setRolePermissionService = (roleId: string, permissionKeys: string[
  * @returns {Promise<roles>} - the created role with granted permissions
  */
 export const createRoleForStoreService = async (
+  currentUserId: string,
   storeId: string,
   name: string,
   permissionKeys: Permissions[],
 ) => {
-  const role = await createCustomRoles(storeId, name);
-  const grantedKeys = await setRolePermissionService(role.id, permissionKeys);
+  await assertCanGrantPermissions(currentUserId, storeId, permissionKeys);
 
-  return { ...role, permission: grantedKeys };
+  return db.transaction(async (tx) => {
+    const role = await createCustomRoles(storeId, name, tx);
+
+    const grantedKeys = await setRolePermissionService(tx, role.id, permissionKeys);
+
+    return {
+      ...role,
+      permission: grantedKeys,
+    };
+  });
 };
 
 /**
@@ -98,24 +113,16 @@ export const updateRolePermissionService = async (
     throw new BadRequestError("Can not update the role of another store!");
   }
 
-  //Now checking the heirarchy of the user and the role that the current user wants to update
   await assertCanActOnRole(currentUserId, storeId, roleId);
 
-  //Then checking to see if the current user can grant every permission that they are trying to assing
-  const currentUserMembership = await getStoreMembershipWithPermission(currentUserId, storeId);
-  const currentUserPermissions = new Set(currentUserMembership?.permissions);
+  await assertCanGrantPermissions(currentUserId, storeId, permissionKeys);
 
-  const extraPermissions = permissionKeys.filter((perm) => !currentUserPermissions.has(perm));
-  if (extraPermissions.length > 0) {
-    throw new ForbiddenError(
-      `You can not grant permissions(${extraPermissions.join(", ")}) that you do not have yourself!`,
-    );
-  }
+  const grantedKeys = await db.transaction((tx) => setRolePermissionService(tx, roleId, permissionKeys));
 
-  const grantedKeys = await setRolePermissionService(roleId, permissionKeys);
-
-  //we are returning with same structure as in createRoleForStore
-  return { ...role, permission: grantedKeys };
+  return {
+    ...role,
+    permission: grantedKeys,
+  };
 };
 
 /**
@@ -187,8 +194,14 @@ export const getPermissionOfRolesService = async (storeId: string, roleId: strin
   return role;
 };
 
-
 export const deleteRoleByIdService = async (roleId: string, userId: string, storeId: string) => {
+  // The route checks requirePermission("roles:remove").
+  const role = await getRoleById(roleId);
+
+  if (!role || role.storeId !== storeId) {
+    throw new NotFoundError("Custom role not found in this store!");
+  }
+
   //unlike in the function above, getPermissionOfRolesService, we don't need to check
   //if the user is a member of the store. For getPermissionOfRolesService, users that
   //are member of the store were allowed to view permissions of roles.
@@ -198,7 +211,6 @@ export const deleteRoleByIdService = async (roleId: string, userId: string, stor
   //first, lets check if the user is trying to delete role that is higher than them
   await assertCanActOnRole(userId, storeId, roleId);
 
-  //then, we need to check how many users are given this role.
   const numberOfMembersOfProvidedRole = await countMemberWithRole(roleId);
 
   if (numberOfMembersOfProvidedRole > 0) {
@@ -208,10 +220,14 @@ export const deleteRoleByIdService = async (roleId: string, userId: string, stor
   }
 
   return deleteRoleById(roleId);
-};
+};;
 
-
-export const updateRoleByIdService = async (roleId: string, storeId: string, roleInfo: UpdateRoleInput) => {
+export const updateRoleByIdService = async (
+  roleId: string,
+  storeId: string,
+  roleInfo: UpdateRoleInput,
+  currentUserId: string,
+) => {
   const roleFromDatabase = await getRoleById(roleId);
 
   if (!roleFromDatabase) {
@@ -234,7 +250,46 @@ export const updateRoleByIdService = async (roleId: string, storeId: string, rol
     throw new NotFoundError("Provided role to update does not exists in this store!");
   }
 
+  await assertCanActOnRole(currentUserId, storeId, roleId);
+
   const updatedRole = await updateRoleName(roleId, roleInfo.name);
 
   return updatedRole;
+};
+
+// The catalog contains seeded action keys.
+// Adding a key does not create an API capability.
+export const getStorePermissionCatalogService = async (storeId: string, userId: string) => {
+  if (!(await hasPlatformRole(userId, "admin")) && !(await isUserMemberOfStore(storeId, userId))) {
+    throw new ForbiddenError("You are not allowed to view permissions for this store!");
+  }
+
+  return getAllPermissions();
+};
+
+export const assignMemberRoleService = async (
+  storeId: string,
+  currentUserId: string,
+  targetUserId: string,
+  roleId: string,
+) => {
+  await assertCanActOnMember(currentUserId, storeId, targetUserId);
+
+  // Preserve the existing ownership rule until a dedicated
+  // transfer flow exists.
+  const target = await getStoreMembershipWithPermission(targetUserId, storeId);
+
+  if (target?.permissions.includes("store:remove")) {
+    throw new ForbiddenError("The owner's role cannot be reassigned through member management!");
+  }
+
+  await assertCanActOnRole(currentUserId, storeId, roleId);
+
+  const member = await updateRoleOfStoreMember(storeId, targetUserId, roleId);
+
+  if (!member) {
+    throw new NotFoundError("Member not found in this store!");
+  }
+
+  return member;
 };

@@ -1,77 +1,67 @@
 import { getRolesWithPermission } from "../repository/roles.repository";
 import { getStoreMembershipWithPermission } from "../repository/store.repository";
+import { hasPlatformRole } from "../repository/platformMember.repository";
 import { ForbiddenError, NotFoundError } from "../utils/error";
 
-//this function checks that if the current user is able to assign role
-//to another member. they can only assign roles that are below them
-/**
- * @param {string} currentUserId - id of the user adding the member
- * @param {string} storeId - id of the store to add the member to
- * @param {string} targetRoleId - id of the role to assign to the new member
- * @returns {Promise<void>} - resolves if the current user can assign the role, otherwise throws an error
- */
-export const assertCanActOnRole = async (currentUserId: string, storeId: string, targetRoleId: string) => {
-  const currentUserMembership = await getStoreMembershipWithPermission(currentUserId, storeId);
+// Equal permission sets are peers, even when their role IDs differ.
+const isStrictSubset = (target: string[], actor: string[]) => {
+  const targetKeys = new Set(target);
+  const actorKeys = new Set(actor);
 
-  if (!currentUserMembership) {
-    throw new ForbiddenError(
-      "You are not a part of this store so you are not allowed to peform this action!",
-    );
-  }
+  return targetKeys.size < actorKeys.size && [...targetKeys].every((key) => actorKeys.has(key));
+};
 
-  const targetRole = await getRolesWithPermission(targetRoleId);
+export const assertCanGrantPermissions = async (
+  currentUserId: string,
+  storeId: string,
+  permissionKeys: string[],
+) => {
+  if (await hasPlatformRole(currentUserId, "admin")) return;
 
-  if (!targetRole) {
-    throw new NotFoundError("Role not found!");
-  }
+  const membership = await getStoreMembershipWithPermission(currentUserId, storeId);
 
-  const currentUserPermission = new Set(currentUserMembership.permissions);
-
-  const targetIsStrictSubset =
-    targetRole.permissions.every((perm) => currentUserPermission.has(perm)) &&
-    currentUserMembership.roleId !== targetRoleId;
-
-  if (!targetIsStrictSubset) {
-    throw new ForbiddenError(
-      "You are not allowed to make changes to users with more or same permsission as you!",
-    );
+  if (!membership || !isStrictSubset(permissionKeys, membership.permissions)) {
+    throw new ForbiddenError("You can only grant a strictly smaller set of permissions than your own!");
   }
 };
 
-/**
- * @param {string} currentUserId - id of the user performing the action
- * @param {string} storeId - id of the store where the action is being performed
- * @param {string} targetUserId - id of the user on whom the action is being performed
- * @returns {Promise<void>} - resolves if the current user can act on the target user, otherwise throws an error
- */
+export const assertCanActOnRole = async (currentUserId: string, storeId: string, targetRoleId: string) => {
+  const targetRole = await getRolesWithPermission(targetRoleId);
+
+  if (!targetRole || (targetRole.storeId !== null && targetRole.storeId !== storeId)) {
+    throw new NotFoundError("Role not found in this store!");
+  }
+
+  //Admins bypass hierarchy, but never the store boundary.
+  if (await hasPlatformRole(currentUserId, "admin")) return;
+
+  const membership = await getStoreMembershipWithPermission(currentUserId, storeId);
+
+  if (
+    !membership ||
+    membership.roleId === targetRoleId ||
+    !isStrictSubset(targetRole.permissions, membership.permissions)
+  ) {
+    throw new ForbiddenError("You can only act on roles with fewer permissions than your own!");
+  }
+};;
+
 export const assertCanActOnMember = async (currentUserId: string, storeId: string, targetUserId: string) => {
   if (currentUserId === targetUserId) {
     throw new ForbiddenError("You are not allowed to perform this action on your account!");
   }
 
-  const [currentUserMembership, targetUserMembership] = await Promise.all([
-    getStoreMembershipWithPermission(currentUserId, storeId),
-    getStoreMembershipWithPermission(targetUserId, storeId),
-  ]);
+  const target = await getStoreMembershipWithPermission(targetUserId, storeId);
 
-  if (!currentUserMembership) {
-    throw new ForbiddenError(
-      "You are not a part of this store so you are not allowed to peform this action!",
-    );
+  if (!target) {
+    throw new NotFoundError("The target user is not a member of this store!");
   }
 
-  if (!targetUserMembership) {
-    throw new ForbiddenError(
-      "The target user is not a part of this store so you are not allowed to peform this action!",
-    );
-  }
+  if (await hasPlatformRole(currentUserId, "admin")) return;
 
-  const currentUserPermission = new Set(currentUserMembership.permissions);
+  const actor = await getStoreMembershipWithPermission(currentUserId, storeId);
 
-  const targetIsSubset = targetUserMembership.permissions.every((perm) => currentUserPermission.has(perm));
-  const isSameRole = currentUserMembership.roleId === targetUserMembership.roleId;
-
-  if (!targetIsSubset || isSameRole) {
-    throw new ForbiddenError("You can only act on users with fewer permission than you!");
+  if (!actor || actor.roleId === target.roleId || !isStrictSubset(target.permissions, actor.permissions)) {
+    throw new ForbiddenError("You can only act on users with fewer permissions than your own!");
   }
 };

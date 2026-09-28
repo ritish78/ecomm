@@ -91,10 +91,13 @@ export const hasStorePermission = async (
  */
 export const getStoreMembershipWithPermission = async (userId: string, storeId: string) => {
   const rows = await db
-    .select({ roleId: storeMembers.roleId, permissionKey: permission.key })
+    .select({
+      roleId: storeMembers.roleId,
+      permissionKey: permission.key,
+    })
     .from(storeMembers)
-    .innerJoin(rolePermission, eq(rolePermission.roleId, storeMembers.roleId))
-    .innerJoin(permission, eq(permission.id, rolePermission.permissionId))
+    .leftJoin(rolePermission, eq(rolePermission.roleId, storeMembers.roleId))
+    .leftJoin(permission, eq(permission.id, rolePermission.permissionId))
     .where(and(eq(storeMembers.userId, userId), eq(storeMembers.storeId, storeId)));
 
   if (rows.length === 0) {
@@ -103,7 +106,7 @@ export const getStoreMembershipWithPermission = async (userId: string, storeId: 
 
   return {
     roleId: rows[0].roleId,
-    permissions: rows.map((row) => row.permissionKey),
+    permissions: rows.flatMap((row) => (row.permissionKey ? [row.permissionKey] : [])),
   };
 };
 
