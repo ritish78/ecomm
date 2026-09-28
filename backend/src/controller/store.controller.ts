@@ -61,17 +61,24 @@ export const createStoreController = async (req: Request, res: Response, next: N
 export const addMembersController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const storeId = req.params.storeId as string;
-
     const currentUserId = req.user?.id;
 
     if (!currentUserId) {
       throw new AuthError("Not logged in! Login in to continue!");
     }
 
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Invalid store id provided!");
+    }
+
     const userInput = addMemberSchema.parse(req.body);
+
+    //the body schema validates the email and role id.
+    //the service checks the requested role, existing account and membership
+    //before adding the user to the store.
     const member = await addMemberToStoreService(currentUserId, storeId, userInput.email, userInput.roleId);
 
-    return res.status(200).send({ message: "Member added successfully!", member });
+    return res.status(201).send({ message: "Member added successfully!", member });
   } catch (error) {
     next(error);
   }
@@ -135,7 +142,7 @@ export const getAllProductsOfStoreController = async (req: Request, res: Respons
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
  * @route                 /api/v1/stores/:storeId/roles
@@ -152,7 +159,7 @@ export const getAllRolesOfStoreController = async (req: Request, res: Response, 
 
     return res.status(200).send({ message: "Roles of store retrieved successfully!", roles });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -162,21 +169,25 @@ export const getAllRolesOfStoreController = async (req: Request, res: Response, 
  * @description         Get all roles with permission of a store
  * @access              Authenticate
  */
-export const getAllRolesWithPermissionOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllRolesWithPermissionOfStoreController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const storeId = req.params.storeId as string;
     const userId = req.user?.id as string;
 
     const roles = await getAllRolesWithPermissionOfStoreService(storeId, userId);
 
-    return res.status(200).send({ message: "Roles and permissions of store retrieved successfully!", roles })
+    return res.status(200).send({ message: "Roles and permissions of store retrieved successfully!", roles });
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
- * @route               /api/v1/stores/:storeId/roles/:roleId/permissions 
+ * @route               /api/v1/stores/:storeId/roles/:roleId/permissions
  * @method              GET
  * @description         Get permissions of role
  * @access              Authenticate
@@ -188,15 +199,15 @@ export const getPermissionOfRoleController = async (req: Request, res: Response,
     const userId = req.user?.id as string;
 
     const permissions = await getPermissionOfRolesService(storeId, roleId, userId);
-    
-    return res.status(200).send({ message: "Permission of role retrieved successfully!", permissions })
+
+    return res.status(200).send({ message: "Permission of role retrieved successfully!", permissions });
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
- * @route               /api/v1/stores/:storeId/members/:userId 
+ * @route               /api/v1/stores/:storeId/members/:userId
  * @method              DELETE
  * @description         Remove a user from a store
  * @access              members:remove
@@ -205,15 +216,29 @@ export const removeUserFromStoreController = async (req: Request, res: Response,
   try {
     const storeId = req.params.storeId as string;
     const targetUserId = req.params.userId as string;
-    const currentUserId = req.user?.id as string;
+    const currentUserId = req.user?.id;
 
-    const user = await removeMemberFromStoreService(storeId, currentUserId, targetUserId);
+    if (!currentUserId) {
+      throw new AuthError("Not logged in! Login in to continue!");
+    }
 
-      return res.status(200).send({ message: "Member removed successfully!", user })
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Invalid store id provided!");
+    }
+
+    if (!targetUserId || !isUuid(targetUserId)) {
+      throw new BadRequestError("Invalid user id provided!");
+    }
+
+    //we are removing the user's membership from this store.
+    //this does not delete their account or their membership in other stores.
+    const member = await removeMemberFromStoreService(storeId, currentUserId, targetUserId);
+
+    return res.status(200).send({ message: "Member removed successfully!", member });
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
  * @route               /api/v1/stores/:identifier
@@ -233,7 +258,7 @@ export const getStoreByIdOrSlugController = async (req: Request, res: Response, 
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
  * @route              /api/v1/stores/:storeId
@@ -255,13 +280,13 @@ export const updateStoreController = async (req: Request, res: Response, next: N
   } catch (error) {
     next(error);
   }
-}
+};
 
 /**
  * @route              /api/v1/stores/:storeId
  * @method             DELETE
  * @description        Delete store by its id
- * @access             store:remove 
+ * @access             store:remove
  */
 export const deleteStoreController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -275,8 +300,7 @@ export const deleteStoreController = async (req: Request, res: Response, next: N
   } catch (error) {
     next(error);
   }
-}
-
+};
 
 /**
  * @route              /api/v1/stores/:storeId/members
@@ -287,13 +311,20 @@ export const deleteStoreController = async (req: Request, res: Response, next: N
 export const getAllMembersOfStoreController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const storeId = req.params.storeId as string;
-    const userId = req.user?.id as string;
+    const currentUserId = req.user?.id;
 
-    const members = await getAllMembersOfStoreService(storeId, userId);
+    if (!currentUserId) {
+      throw new AuthError("Not logged in! Login in to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Invalid store id provided!");
+    }
+
+    const members = await getAllMembersOfStoreService(storeId, currentUserId);
 
     return res.status(200).send({ message: "Members of store retrieved successfully!", members });
   } catch (error) {
     next(error);
   }
-}
-
+};
