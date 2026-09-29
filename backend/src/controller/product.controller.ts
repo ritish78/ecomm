@@ -4,6 +4,7 @@ import { AuthError, BadRequestError } from "../utils/error";
 import { filterProductSchema } from "../schema/product.schema";
 import isUuid from "../utils/isUuid";
 import { getProductHistoryService } from "../services/productHistory.services";
+import { filterProductHistorySchema } from "../schema/productHistory.schema";
 
 /**
  * @route               /api/v1/products/:identifier
@@ -67,7 +68,9 @@ export const getProductHistoryController = async (req: Request, res: Response, n
       throw new BadRequestError("Please provide correct product id!");
     }
 
-    const userInputFilters = filterProductSchema.parse(req.query);
+    //selected filterProductSchema from the dropdowb in ide before
+    //when it should have been filterProductHistorySchema
+    const userInputFilters = filterProductHistorySchema.parse(req.query);
 
     const historyOfProduct = await getProductHistoryService(storeId, productId, userInputFilters);
 

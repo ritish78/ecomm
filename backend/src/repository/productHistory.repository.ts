@@ -19,6 +19,7 @@ export const createProductHistory = async (
       productId: productFromDatabase.id,
       name: productFromDatabase.name,
       slug: productFromDatabase.name,
+      description: productFromDatabase.description,
       categoryId: productFromDatabase.categoryId,
       categoryName,
       brandId: productFromDatabase.brandId,
