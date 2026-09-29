@@ -27,6 +27,12 @@ export const productVariants = pgTable(
     stock: integer("stock").default(0).notNull(),
     sku: varchar("sku", { length: 100 }).unique(),
     isAvailable: boolean("is_available").default(true).notNull(),
+    //creating another column which tracks if the product is discontinued or not
+    //isAvailable will have true or false if the stock exists for the product
+    //or if we were to sell the product or not even if product exists or not
+    //discontinuedAt will track if the product is discontinued and when it was
+    //discontinued even if we have stock available for it.
+    discontinuedAt: timestamp("discontinued_at"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },

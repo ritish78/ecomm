@@ -9,6 +9,8 @@ import isUuid from "../utils/isUuid";
 import { CreateProductVariantInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
 import toOrQuery from "../utils/toOrQuery";
 import { StoreProducts, storeProducts } from "../models/storeProducts.model";
+import { AddProductVariantInput, UpdateProductVariantInput } from "../schema/productVariants.schema";
+import { randomUUID } from "node:crypto";
 
 /**
  * @param {string} productId - id of the product to get
@@ -560,4 +562,92 @@ export const updateProductById = async (tx: Tx, productId: string, productInfo: 
     .returning();
 
   return updatedProduct;
+};
+
+export const getProductVariantsForManagement = async (productId: string) => {
+  //when we are managing store, we need to know about all the products
+  //even if they are discontinued or the variants that we don't have stock
+  return db
+    .select()
+    .from(productVariants)
+    .where(eq(productVariants.productId, productId))
+    .orderBy(asc(productVariants.createdAt), asc(productVariants.id));
+};
+
+export const addProductVariant = async (tx: Tx, productId: string, variantInfo: AddProductVariantInput) => {
+  //if the user provides a SKU, then we use it
+  //but if the user does not provide it, then we create one
+  const sku = variantInfo.sku ?? `VAR-${randomUUID()}`.toUpperCase();
+
+  const [variant] = await tx
+    .insert(productVariants)
+    .values({
+      productId,
+      weight: variantInfo.weight,
+      unit: variantInfo.unit,
+      price: variantInfo.price,
+      stock: variantInfo.stock,
+      sku,
+      isAvailable: true,
+    })
+    .onConflictDoNothing({
+      target: productVariants.sku,
+    })
+    .returning();
+
+  return variant;
+};
+
+export const findProductVariantForUpdate = async (tx: Tx, productId: string, variantId: string) => {
+  //we need to check both id so that a variant belonging to another
+  //product won't be updated by changing the variant id in the url
+  const [variant] = await tx
+    .select()
+    .from(productVariants)
+    .where(and(eq(productVariants.id, variantId), eq(productVariants.productId, productId)))
+    .for("update");
+
+  return variant;
+};
+
+export const updateProductVariantById = async (
+  tx: Tx,
+  productId: string,
+  variantId: string,
+  variantInfo: UpdateProductVariantInput,
+) => {
+  const updateData: Partial<typeof productVariants.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+
+  //we only update the fields that the user provided
+  if (variantInfo.weight !== undefined) {
+    updateData.weight = variantInfo.weight;
+  }
+
+  if (variantInfo.unit !== undefined) {
+    updateData.unit = variantInfo.unit;
+  }
+
+  if (variantInfo.sku !== undefined) {
+    updateData.sku = variantInfo.sku;
+  }
+
+  if (variantInfo.isAvailable !== undefined) {
+    updateData.isAvailable = variantInfo.isAvailable;
+  }
+
+  if (variantInfo.discontinue === true) {
+    if (updateData.discontinuedAt === null || updateData.discontinuedAt === undefined) {
+      updateData.discontinuedAt = new Date();
+    }
+  }
+
+  const [updatedVariant] = await tx
+    .update(productVariants)
+    .set(updateData)
+    .where(and(eq(productVariants.id, variantId), eq(productVariants.productId, productId)))
+    .returning();
+
+  return updatedVariant;
 };
