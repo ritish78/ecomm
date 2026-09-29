@@ -11,11 +11,12 @@ import {
 } from "../services/store.service";
 import { AuthError, BadRequestError } from "../utils/error";
 import { createStoreSchema, updateStoreSchema } from "../schema/store.schema";
-import { CreateProductInput, filterProductSchema } from "../schema/product.schema";
+import { CreateProductInput, filterProductSchema, updateProductSchema } from "../schema/product.schema";
 import {
   createProductService,
   deleteProductByIdService,
   getProductsService,
+  updateProductByIdService,
 } from "../services/product.services";
 import {
   getAllRolesOfStoreService,
@@ -328,3 +329,42 @@ export const getAllMembersOfStoreController = async (req: Request, res: Response
     next(error);
   }
 };
+
+/**
+ * @route               /api/v1/stores/:storeId/products/:productId
+ * @method              PATCH
+ * @description         Update the basic details of a product in a store
+ * @access              product:edit
+ */
+export const updateProductListingController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+    const currentUserId = req.user?.id;
+
+    //again for the nth time, current user id should not be null or undefined
+    //we already have middlewares that check for user login but still making
+    //the TS happy.
+    if (!currentUserId) {
+      throw new AuthError("Not logged in! Please login to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Invalid id of the store!");
+    }
+
+    if (!productId || !isUuid(productId)) {
+      throw new BadRequestError("Invalid if of the product!");
+    }
+
+    const userInput = updateProductSchema.parse(req.body);
+
+    //the middleware has already checked for product:edit permission
+    //checks to see if the product belongs to the store is done in service
+    const product = await updateProductByIdService(storeId, productId, userInput);
+
+    return res.status(200).send({ message: "Product has been updated successfully!", product });
+  } catch (error) {
+    next(error);
+  }
+}

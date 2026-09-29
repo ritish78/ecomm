@@ -36,6 +36,19 @@ export const createProductSchema = z.object({
     .min(1, { error: "Please enter atleast one variant of the product!" }),
 });
 
+export const updateProductSchema = z
+  .object({
+    name: z.string().min(1, { error: "Please enter the name of the product" }).optional(),
+    description: z.string().optional(),
+    brandId: z.uuid({ error: "Please enter a valid brand uuid!" }).optional(),
+    categoryId: z.uuid({ error: "Please enter a valid category uuid!" }).optional(),
+  })
+  .strict()
+  .refine((productInfo) => Object.values(productInfo).some((value) => value !== undefined), {
+    error: "Please provide atleast one field to update!",
+  });
+
 export type FilterProductInput = z.infer<typeof filterProductSchema>;
 export type CreateProductVariantInput = z.infer<typeof createProductVariantSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;

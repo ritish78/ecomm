@@ -14,6 +14,7 @@ import {
   getPermissionOfRoleController,
   getStoreByIdOrSlugController,
   removeUserFromStoreController,
+  updateProductListingController,
   updateStoreController,
 } from "../controller/store.controller";
 import {
@@ -43,6 +44,13 @@ router.post(
   authenticate,
   requirePermission("product:create"),
   createProductListingController,
+);
+
+router.patch(
+  "/:storeId/products/:productId",
+  authenticate,
+  requirePermission("product:edit"),
+  updateProductListingController,
 );
 
 router.post("/:storeId/members", authenticate, requirePermission("members:add"), addMembersController);

@@ -6,9 +6,9 @@ import { categories } from "../models/categories.model";
 import { productImages } from "../models/productImages.model";
 import { productVariants } from "../models/productVariant.model";
 import isUuid from "../utils/isUuid";
-import { CreateProductVariantInput, FilterProductInput } from "../schema/product.schema";
+import { CreateProductVariantInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
 import toOrQuery from "../utils/toOrQuery";
-import { storeProducts } from "../models/storeProducts.model";
+import { StoreProducts, storeProducts } from "../models/storeProducts.model";
 
 /**
  * @param {string} productId - id of the product to get
@@ -416,9 +416,9 @@ export const createProductVariants = async (
 
 /**
  * @param {Tx} tx - database transaction or a database connection
-  * @param {string} storeId - ID of the store to link the product to
-  * @param {string} productId - ID of the product to link to the store
-  * @returns {Promise<StoreProduct>} - the linked store product
+ * @param {string} storeId - ID of the store to link the product to
+ * @param {string} productId - ID of the product to link to the store
+ * @returns {Promise<StoreProduct>} - the linked store product
  */
 export const linkProductToStore = async (tx: Tx, storeId: string, productId: string) => {
   const [storeProduct] = await tx.insert(storeProducts).values({ storeId, productId }).returning();
@@ -429,7 +429,7 @@ export const linkProductToStore = async (tx: Tx, storeId: string, productId: str
 /**
  * @param {string} storeId - id of the store to get the product for
  * @param {string} productId - id of the product to get for the store
- * @returns {Promise<StoreProduct | null>} - the retrieved store product 
+ * @returns {Promise<StoreProduct | null>} - the retrieved store product
  */
 export const findStoreProductByStoreIdAndProductId = async (storeId: string, productId: string) => {
   const [storeProduct] = await db
@@ -450,7 +450,6 @@ export const deleteProductById = async (productId: string) => {
 
   return deletedProduct;
 };
-
 
 //feel like we can edit the filterProducts function to accept storeId
 //and filter product by storeId and we will have type of return
@@ -481,3 +480,81 @@ export const deleteProductById = async (productId: string) => {
 
 //   return productsOfStore;
 // };
+
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} productId - ID of the product to update
+ * @returns {Promise<Product | undefined>} - the product or undefined if not found
+ */
+export const findProductForUpdate = async (tx: Tx, productId: string) => {
+  //first we lock the product in the database before updating it
+  //if another user wants to update the same product, then it waits
+  //for this transaction to complete
+  const [productFromDatabase] = await tx
+    .select()
+    .from(products)
+    .where(eq(products.id, productId))
+    .for("update");
+
+  return productFromDatabase;
+};
+
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} productId - ID of the product which is associated with store
+ * @returns {Promise<StoreProducts[]>}
+ */
+export const getProductStoreLinksForUpdate = async (tx: Tx, productId: string) => {
+  return tx.select().from(storeProducts).where(eq(storeProducts.productId, productId)).for("update");
+};
+
+/**
+ * @param {Tx} tx - database transaction or a database connection
+ * @param {string} brandId - ID of the brand to use
+ * @param {string} categoryId - ID of the category to use
+ * @returns
+ */
+export const getProductReferencesForUpdate = async (tx: Tx, brandId: string, categoryId: string) => {
+  //we will check both brand and category exists or not before updating the product
+  //key share lock prevents the brand and category from being deleted while this transaction is processing
+  const [brand] = await tx.select().from(brands).where(eq(brands.id, brandId)).for("key share");
+
+  const [category] = await tx.select().from(categories).where(eq(categories.id, categoryId)).for("key share");
+
+  return { brand, category };
+};
+
+export const updateProductById = async (tx: Tx, productId: string, productInfo: UpdateProductInput) => {
+  const updateData: Partial<typeof products.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+
+  //we only add the fields that the user provided to update
+  //we are using a PATCH so, we only update columns that we were provided with
+  if (productInfo.name !== undefined) {
+    updateData.name = productInfo.name;
+  }
+
+  if (productInfo.description !== undefined) {
+    updateData.description = productInfo.description;
+  }
+
+  if (productInfo.categoryId !== undefined) {
+    updateData.categoryId = productInfo.categoryId;
+  }
+
+  if (productInfo.brandId !== undefined) {
+    updateData.brandId = productInfo.brandId;
+  }
+
+  //we will still keep the same slug when updating the product.
+  //we don't want users to change the whole product to another product
+  //slug will still have the information of the product
+  const [updatedProduct] = await tx
+    .update(products)
+    .set(updateData)
+    .where(eq(products.id, productId))
+    .returning();
+
+  return updatedProduct;
+};

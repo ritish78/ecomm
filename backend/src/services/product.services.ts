@@ -5,12 +5,16 @@ import {
   deleteProductById,
   filterProducts,
   findProductById,
+  findProductForUpdate,
   findProductWithDetailsByIdOrSlug,
   findStoreProductByStoreIdAndProductId,
+  getProductReferencesForUpdate,
+  getProductStoreLinksForUpdate,
   linkProductToStore,
+  updateProductById,
 } from "../repository/product.repository";
-import { CreateProductInput, FilterProductInput } from "../schema/product.schema";
-import { NotFoundError } from "../utils/error";
+import { CreateProductInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
+import { ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
 
 /**
@@ -91,4 +95,72 @@ export const deleteProductByIdService = async (productId: string, storeId: strin
   }
 
   return deletedProduct;
+};
+
+
+export const updateProductByIdService = async (
+  storeId: string,
+  productId: string,
+  productInfo: UpdateProductInput,
+) => {
+  return db.transaction(async (tx) => {
+    const productFromDatabase = await findProductForUpdate(tx, productId);
+
+    if (!productFromDatabase) {
+      throw new NotFoundError("Product to update not found!");
+    }
+
+    const productStoreLinks = await getProductStoreLinksForUpdate(tx, productId);
+
+    const productBelongsToStore = productStoreLinks.some((storeProduct) => storeProduct.storeId === storeId);
+
+    //after checking the permission to edit products of the store,
+    //we then check to see if the product belongs to the store
+    if (!productBelongsToStore) {
+      throw new NotFoundError("Product to update not found in this store!");
+    }
+
+    //our store_products table allows a product to be linked to more than
+    //one store. Updating that product would change it for every linked store.
+    //until we decide how shared products should be managed, we reject the edit.
+    if (productStoreLinks.length > 1) {
+      throw new ConflictError(
+        "This product is linked to multiple stores and can not be edited through this endpoint yet!",
+      );
+    }
+
+    const brandId = productInfo.brandId ?? productFromDatabase.brandId;
+    const categoryId = productInfo.categoryId ?? productFromDatabase.categoryId;
+
+    const { brand, category } = await getProductReferencesForUpdate(tx, brandId, categoryId);
+
+    if (!brand) {
+      //should we throw a NotFoundError or a BadRequestError?
+      throw new NotFoundError(`Brand of id ${brandId} not found!`);
+    }
+
+    if (!category) {
+      throw new NotFoundError(`Category of id ${categoryId} not found!`);
+    }
+
+    const productHasChanges =
+      (productInfo.name !== undefined && productInfo.name !== productFromDatabase.name) ||
+      (productInfo.description !== undefined &&
+        productInfo.description !== productFromDatabase.description) ||
+      (productInfo.brandId !== undefined && productInfo.brandId !== productFromDatabase.brandId) ||
+      (productInfo.categoryId !== undefined && productInfo.categoryId !== productFromDatabase.categoryId);
+
+    //if no changes need to be done, then we return the product from our database.
+    if (!productHasChanges) {
+      return productFromDatabase;
+    }
+
+    const updatedProduct = await updateProductById(tx, productId, productInfo);
+
+    if (!updatedProduct) {
+      throw new NotFoundError("Product to update not found in this store!");
+    }
+
+    return updatedProduct;
+  });
 };
