@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { getProductsService, getProductWithDetailsByIdOrSlugService } from "../services/product.services";
-import { BadRequestError } from "../utils/error";
+import { AuthError, BadRequestError } from "../utils/error";
 import { filterProductSchema } from "../schema/product.schema";
+import isUuid from "../utils/isUuid";
+import { getProductHistoryService } from "../services/productHistory.services";
 
 /**
  * @route               /api/v1/products/:identifier
@@ -40,3 +42,37 @@ export const getProductsController = async (req: Request, res: Response, next: N
     next(error);
   }
 }
+
+/**
+ * @route               /api/v1/stores/:storeId/products/:productId/history
+ * @method              GET
+ * @description         Get previous details saved when a product was edited
+ * @access              product:edit
+ */
+export const getProductHistoryController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      throw new AuthError("Please login to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Please provide correct store id!");
+    }
+
+    if (!productId || !isUuid(productId)) {
+      throw new BadRequestError("Please provide correct product id!");
+    }
+
+    const userInputFilters = filterProductSchema.parse(req.query);
+
+    const historyOfProduct = await getProductHistoryService(storeId, productId, userInputFilters);
+
+    return res.status(200).send({ message: "History of product retrieved successfully!", historyOfProduct });
+  } catch (error) {
+    next(error);
+  }
+};

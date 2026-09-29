@@ -361,7 +361,7 @@ export const updateProductListingController = async (req: Request, res: Response
 
     //the middleware has already checked for product:edit permission
     //checks to see if the product belongs to the store is done in service
-    const product = await updateProductByIdService(storeId, productId, userInput);
+    const product = await updateProductByIdService(storeId, productId, userInput, currentUserId);
 
     return res.status(200).send({ message: "Product has been updated successfully!", product });
   } catch (error) {

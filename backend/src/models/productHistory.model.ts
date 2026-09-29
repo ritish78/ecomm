@@ -10,7 +10,10 @@ export const productHistory = pgTable(
       .notNull()
       .references(() => products.id),
     name: varchar("name", { length: 255 }).notNull(),
-    slug: varchar("slug", { length: 255 }).notNull().unique(),
+    //removing the unique() constraint of slug as we want to have many rows for
+    //the same product. once the product is updated, we create a new row and so,
+    //we need to have multiple rows for the same product and slug will be duplicated
+    slug: varchar("slug", { length: 255 }).notNull(),
     description: text("description"),
     brandId: uuid("brand_id"), //we are not referencing id of brand because brand might not exists later and we need to display its history
     brandName: varchar("brand_name", { length: 100 }),

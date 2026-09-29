@@ -443,10 +443,13 @@ export const findStoreProductByStoreIdAndProductId = async (storeId: string, pro
 
 /**
  * @param {string} productId - id of the product to delete
+ * @param {Tx} tx - optional database transaction
  * @returns {Promise<Product | null>} - the deleted product
  */
-export const deleteProductById = async (productId: string) => {
-  const [deletedProduct] = await db.delete(products).where(eq(products.id, productId)).returning();
+export const deleteProductById = async (productId: string, tx?: Tx) => {
+  const userClient = tx ? tx : db;
+
+  const [deletedProduct] = await userClient.delete(products).where(eq(products.id, productId)).returning();
 
   return deletedProduct;
 };

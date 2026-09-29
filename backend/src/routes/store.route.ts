@@ -25,6 +25,7 @@ import {
   updateNameOfRoleController,
   updateRolePermissionController,
 } from "../controller/role.controller";
+import { getProductHistoryController } from "../controller/product.controller";
 
 const router = Router();
 
@@ -97,6 +98,13 @@ router.delete(
   authenticate,
   requirePermission("product:delete"),
   deleteProductListingController,
+);
+
+router.get(
+  "/:storeId/products/:productId/history",
+  authenticate,
+  requirePermission("product:edit"),
+  getProductHistoryController,
 );
 
 export default router;

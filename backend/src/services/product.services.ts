@@ -7,14 +7,15 @@ import {
   findProductById,
   findProductForUpdate,
   findProductWithDetailsByIdOrSlug,
-  findStoreProductByStoreIdAndProductId,
+  // findStoreProductByStoreIdAndProductId,
   getProductReferencesForUpdate,
   getProductStoreLinksForUpdate,
   linkProductToStore,
   updateProductById,
 } from "../repository/product.repository";
+import { createProductHistory, hasProductHistory } from "../repository/productHistory.repository";
 import { CreateProductInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
-import { ConflictError, NotFoundError } from "../utils/error";
+import { BadRequestError, ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
 
 /**
@@ -82,19 +83,45 @@ export const createProductService = async (storeId: string, product: CreateProdu
  * @returns {Promise<Product>} - the deleted product
  */
 export const deleteProductByIdService = async (productId: string, storeId: string) => {
-  const product = await findStoreProductByStoreIdAndProductId(storeId, productId);
+   return db.transaction(async (tx) => {
+     //we use the same product lock as editing so that a delete and an edit
+     //can not pass their checks independently and modify the product together
+     const productFromDatabase = await findProductForUpdate(tx, productId);
 
-  if (!product) {
-    throw new NotFoundError(`Product to delete of id ${productId} not found!`);
-  }
+     if (!productFromDatabase) {
+       throw new NotFoundError(`Product to delete of id ${productId} not found!`);
+     }
 
-  const deletedProduct = await deleteProductById(productId);
+     const productStoreLinks = await getProductStoreLinksForUpdate(tx, productId);
 
-  if (!deletedProduct) {
-    throw new NotFoundError(`Product to delete of id ${productId} not found!`);
-  }
+     const productBelongsToStore = productStoreLinks.some((storeProduct) => storeProduct.storeId === storeId);
 
-  return deletedProduct;
+     if (!productBelongsToStore) {
+       throw new NotFoundError("Product to delete not found in this store!");
+     }
+
+     //deleting a shared product would also remove it from other stores
+     //we keep the same restriction that we use in the editing endpoint
+     if (productStoreLinks.length > 1) {
+       throw new ConflictError(
+         "This product is linked to multiple stores and can not be deleted through this endpoint!",
+       );
+     }
+
+     const productHasHistory = await hasProductHistory(tx, productId);
+
+     if (productHasHistory) {
+       throw new ConflictError("This product has edit history and can not be permanently deleted!");
+     }
+
+     const deletedProduct = await deleteProductById(productId, tx);
+
+     if (!deletedProduct) {
+       throw new NotFoundError(`Product to delete of id ${productId} not found!`);
+     }
+
+     return deletedProduct;
+   });
 };
 
 
@@ -102,6 +129,7 @@ export const updateProductByIdService = async (
   storeId: string,
   productId: string,
   productInfo: UpdateProductInput,
+  currentUserId: string,
 ) => {
   return db.transaction(async (tx) => {
     const productFromDatabase = await findProductForUpdate(tx, productId);
@@ -154,6 +182,36 @@ export const updateProductByIdService = async (
     if (!productHasChanges) {
       return productFromDatabase;
     }
+
+    let previousBrand = brand;
+    let previousCategory = category;
+
+    if (brandId !== productFromDatabase.brandId || categoryId !== productFromDatabase.categoryId) {
+      const previousReferences = await getProductReferencesForUpdate(
+        tx,
+        productFromDatabase.brandId,
+        productFromDatabase.categoryId,
+      );
+
+      if (!previousReferences.brand || !previousReferences.category) {
+        throw new BadRequestError(
+          "Could not find the previous brand or category to update the product from!",
+        );
+      }
+
+      previousBrand = previousReferences.brand;
+      previousCategory = previousReferences.category;
+    }
+
+    //first we create the product history before updating the product
+    //if any of our insert fails then we roll back this transaction
+    await createProductHistory(
+      tx,
+      productFromDatabase,
+      previousBrand.name,
+      previousCategory.name,
+      currentUserId,
+    );
 
     const updatedProduct = await updateProductById(tx, productId, productInfo);
 
