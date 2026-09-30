@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, ilike, isNull, or, sql } from "drizzle-orm";
 import db, { Tx } from "../db";
 import { Product, products } from "../models/products.model";
 import { brands } from "../models/brands.model";
@@ -178,7 +178,12 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
   const productsVariantsQuery = db
     .select()
     .from(productVariants)
-    .where(eq(productVariants.productId, productRow.id));
+    .where(
+      and(
+        eq(productVariants.productId, productRow.id),
+        or(isNull(productVariants.discontinuedAt), gt(productVariants.stock, 0)),
+      ),
+    );
 
   //after getting the products, we are querying the images and variants table in a Promise.all
   //statement. We could also query the products same way which we are querying images and variants
@@ -206,6 +211,14 @@ export const filterProducts = async (filters: FilterProductInput) => {
   const { keyword, storeId, categoryId, brandId, minPrice, maxPrice, limit, page, sort } = filters;
 
   const offset = (page - 1) * limit;
+
+  //a discontinued variant can still be sold while its stock is not zero
+  const availableVariantCondition = sql`
+      ${productVariants.isAvailable} = true
+      AND (
+        ${productVariants.discontinuedAt} IS NULL
+        OR ${productVariants.stock} > 0
+      )`;
 
   const conditions = [eq(products.isActive, true)];
 
@@ -238,13 +251,13 @@ export const filterProducts = async (filters: FilterProductInput) => {
 
   if (minPrice !== undefined) {
     priceConditions.push(
-      sql`MIN(${productVariants.price}) FILTER(WHERE ${productVariants.isAvailable} = true) >= ${minPrice}`,
+      sql`MIN(${productVariants.price}) FILTER (WHERE ${availableVariantCondition}) >= ${minPrice}`,
     );
   }
 
   if (maxPrice !== undefined) {
     priceConditions.push(
-      sql`MAX(${productVariants.price}) FILTER(WHERE ${productVariants.isAvailable} = true) <= ${maxPrice}`,
+      sql`MAX(${productVariants.price}) FILTER (WHERE ${availableVariantCondition}) <= ${maxPrice}`,
     );
   }
 
@@ -254,9 +267,9 @@ export const filterProducts = async (filters: FilterProductInput) => {
   const orderByClause = (() => {
     switch (sort) {
       case "price_asc":
-        return sql`MIN(${productVariants.price}) FILTER (WHERE ${productVariants.isAvailable} = true) ASC NULLS LAST`;
+        return sql`MIN(${productVariants.price}) FILTER (WHERE ${availableVariantCondition}) ASC NULLS LAST`;
       case "price_desc":
-        return sql`MIN(${productVariants.price}) FILTER (WHERE ${productVariants.isAvailable} = true) DESC NULLS LAST`;
+        return sql`MIN(${productVariants.price}) FILTER (WHERE ${availableVariantCondition}) DESC NULLS LAST`;
       case "name_asc":
         return sql`${products.name} ASC`;
       case "name_desc":
@@ -268,8 +281,8 @@ export const filterProducts = async (filters: FilterProductInput) => {
       case "relevant":
       default:
         return keyword
-          ? sql<number>`ts_rank(${products.searchVector}, websearch_to_tsquery('english', ${orQueryKeyword}))`
-          : sql<number>`1`;
+          ? sql`ts_rank(${products.searchVector}, websearch_to_tsquery('english', ${orQueryKeyword})) DESC`
+          : sql`${products.createdAt} DESC`;
     }
   })();
 
@@ -285,13 +298,11 @@ export const filterProducts = async (filters: FilterProductInput) => {
       categoryId: categories.id,
       categoryName: categories.name,
       categorySlug: categories.slug,
-      minPrice: sql<
-        string | null
-      >`MIN(${productVariants.price}) FILTER (WHERE ${productVariants.isAvailable} = true)`,
-      maxPrice: sql<
-        string | null
-      >`MAX(${productVariants.price}) FILTER (WHERE ${productVariants.isAvailable} = true)`,
-      variantCount: sql<number>`COUNT(${productVariants.id}) FILTER (WHERE ${productVariants.isAvailable} = true)`,
+      minPrice: sql<string | null>`MIN(${productVariants.price}) FILTER (WHERE ${availableVariantCondition})`,
+      maxPrice: sql<string | null>`MAX(${productVariants.price}) FILTER (WHERE ${availableVariantCondition})`,
+      //joining images can repeat each variant, so we count each variant only once.
+      variantCount: sql<number>`COUNT(DISTINCT ${productVariants.id}) FILTER (WHERE ${availableVariantCondition})
+`,
       //for selecting, we are doing MIN again like in minPrice eventhough MIN returns smallest
       //we know there are only one primary image for one product, we are selecting smallest
       //by the character length of the url. we could do better but it would +1 query
@@ -310,7 +321,7 @@ export const filterProducts = async (filters: FilterProductInput) => {
     .where(whereClause)
     .groupBy(products.id, brands.id, categories.id)
     .having(havingClause)
-    .orderBy(orderByClause)
+    .orderBy(orderByClause, products.id)
     .limit(limit)
     .offset(offset);
 

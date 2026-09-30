@@ -25,7 +25,12 @@ import {
   updateNameOfRoleController,
   updateRolePermissionController,
 } from "../controller/role.controller";
-import { getProductHistoryController } from "../controller/product.controller";
+import {
+  addProductVariantController,
+  getProductHistoryController,
+  getProductVariantsForManagementController,
+  updateProductVariantController,
+} from "../controller/product.controller";
 
 const router = Router();
 
@@ -105,6 +110,29 @@ router.get(
   authenticate,
   requirePermission("product:edit"),
   getProductHistoryController,
+);
+
+router.get(
+  "/:storeId/products/:productId/variants",
+  authenticate,
+  requirePermission("product:edit"),
+  getProductVariantsForManagementController,
+);
+
+router.post(
+  "/:storeId/products/:productId/variants",
+  authenticate,
+  requirePermission("product:edit"),
+  requirePermission("product_price:update"),
+  requirePermission("product_stock:update"),
+  addProductVariantController,
+);
+
+router.patch(
+  "/:storeId/products/:productId/variants/:variantId",
+  authenticate,
+  requirePermission("product:edit"),
+  updateProductVariantController,
 );
 
 export default router;
