@@ -23,8 +23,10 @@ export const assertCanGrantPermissions = async (
   permissionKeys: string[],
   tx: Tx,
 ) => {
-  if (await hasPlatformRole(currentUserId, "admin")) return;
-
+  //we check platform membership using the same transaction.
+  if (await hasPlatformRoleInTransaction(tx, currentUserId, "admin")) {
+    return;
+  }
   const membership = await getStoreMembershipWithPermission(currentUserId, storeId, tx);
 
   if (!membership || !isStrictSubset(permissionKeys, membership.permissions)) {
@@ -96,7 +98,7 @@ export const assertCanActOnRole = async (currentUserId: string, storeId: string,
   //Admins bypass hierarchy, but never the store boundary.
   if (await hasPlatformRole(currentUserId, "admin")) return;
 
-  const membership = await getStoreMembershipWithPermission(currentUserId, storeId);
+  const membership = await getStoreMembershipWithPermission(currentUserId, storeId, tx);
 
   if (
     !membership ||
