@@ -134,6 +134,8 @@ export const updateProductVariantByIdService = async (
       if (!updatedVariant) {
         throw new NotFoundError("Variant to update not found!");
       }
+
+      return updatedVariant;
     });
   } catch (error) {
     //2305 is the unique constraint violation

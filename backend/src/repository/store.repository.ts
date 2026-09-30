@@ -65,8 +65,11 @@ export const hasStorePermission = async (
   userId: string,
   storeId: string,
   permissionKey: Permissions,
+  tx?: Tx,
 ): Promise<boolean> => {
-  const result = await db
+  const database = tx ? tx : db;
+
+  const result = await database
     .select({ permissionId: permission.id })
     .from(storeMembers)
     .innerJoin(roles, eq(storeMembers.roleId, roles.id))
@@ -89,8 +92,9 @@ export const hasStorePermission = async (
  * @param {string} storeId - id of the store to check
  * @returns {Promise<StoreMembershipWithPermission | null>} - the store membership with permissions or null if not found
  */
-export const getStoreMembershipWithPermission = async (userId: string, storeId: string) => {
-  const rows = await db
+export const getStoreMembershipWithPermission = async (userId: string, storeId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const rows = await database
     .select({
       roleId: storeMembers.roleId,
       permissionKey: permission.key,
@@ -132,7 +136,8 @@ export const findStoreByIdOrSlug = async (identifier: string) => {
   return { ...store, productCount };
 };
 
-export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInput) => {
+export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInput, tx?: Tx) => {
+  const database = tx ? tx : db;
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
   //Now, adding any provided fields to the update data
@@ -167,13 +172,19 @@ export const updateStoreById = async (storeId: string, storeInfo: UpdateStoreInp
     //and then update the slug of the store.
   }
 
-  const [updatedStore] = await db.update(stores).set(updateData).where(eq(stores.id, storeId)).returning();
+  const [updatedStore] = await database
+    .update(stores)
+    .set(updateData)
+    .where(eq(stores.id, storeId))
+    .returning();
 
   return updatedStore;
 };
 
-export const deleteStoreById = async (storeId: string) => {
-  const [deletedStore] = await db.delete(stores).where(eq(stores.id, storeId)).returning();
+export const deleteStoreById = async (storeId: string, tx: Tx) => {
+  const database = tx ? tx : db;
+
+  const [deletedStore] = await database.delete(stores).where(eq(stores.id, storeId)).returning();
 
   return deletedStore;
 };
@@ -235,3 +246,14 @@ export const getAllMembersOfStore = async (storeId: string) => {
     },
   }));
 };
+
+/**
+ * @param tx - database transaction
+ * @param storeId - id of the store to lock
+ */
+export const getStoreForUpdate = async (tx: Tx, storeId: string) => {
+  //all role and member changes will need to acquire this lock before checking permission
+  const [storeFromDatabase] = await tx.select().from(stores).where(eq(stores.id, storeId)).for("update");
+
+  return storeFromDatabase;
+}

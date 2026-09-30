@@ -26,8 +26,9 @@ export const createCustomRoles = async (storeId: string, name: string, tx: Tx) =
  * @param {string} roleId - id of the role to get
  * @returns {Promise<roles | null>} - the retrieved role or null if not found
  */
-export const getRoleById = async (roleId: string) => {
-  const [role] = await db.select().from(roles).where(eq(roles.id, roleId));
+export const getRoleById = async (roleId: string, tx: Tx) => {
+  const database = tx ? tx : db;
+  const [role] = await database.select().from(roles).where(eq(roles.id, roleId));
 
   return role;
 };
@@ -68,8 +69,15 @@ export const insertRolePermission = async (tx: Tx, roleId: string, permissionIds
  * @param {string} newRoleId - id of the new role to assign
  * @returns {Promise<StoreMember>} - the updated store member
  */
-export const updateRoleOfStoreMember = async (storeId: string, userId: string, newRoleId: string) => {
-  const [updated] = await db
+export const updateRoleOfStoreMember = async (
+  storeId: string,
+  userId: string,
+  newRoleId: string,
+  tx?: Tx,
+) => {
+  const database = tx ? tx : db;
+
+  const [updated] = await database
     .update(storeMembers)
     .set({ roleId: newRoleId })
     .where(and(eq(storeMembers.storeId, storeId), eq(storeMembers.userId, userId)))
@@ -136,14 +144,15 @@ export const getAllRolesWithPermissionOfStore = async (storeId: string) => {
  * @param {string} roleId - id of the role to get permissions for
  * @returns {Promise<Role | null>} - the role with its permissions or null if not found
  */
-export const getRolesWithPermission = async (roleId: string) => {
-  const [role] = await db.select().from(roles).where(eq(roles.id, roleId));
+export const getRolesWithPermission = async (roleId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const [role] = await database.select().from(roles).where(eq(roles.id, roleId));
 
   if (!role) {
     return null;
   }
 
-  const rolePermissions = await db
+  const rolePermissions = await database
     .select({ key: permission.key })
     .from(rolePermission)
     .innerJoin(permission, eq(permission.id, rolePermission.permissionId))
@@ -169,8 +178,9 @@ export const getGlobalOwnerRole = async (tx: Tx) => {
   return ownerRole;
 };
 
-export const deleteRoleById = async (roleId: string) => {
-  const [deletedRole] = await db
+export const deleteRoleById = async (roleId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const [deletedRole] = await database
     .delete(roles)
     .where(and(isNotNull(roles.storeId), eq(roles.id, roleId)))
     .returning();
@@ -178,8 +188,9 @@ export const deleteRoleById = async (roleId: string) => {
   return deletedRole;
 };
 
-export const countMemberWithRole = async (roleId: string) => {
-  const rows = await db
+export const countMemberWithRole = async (roleId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const rows = await database
     .select({ id: storeMembers.id })
     .from(storeMembers)
     .where(eq(storeMembers.roleId, roleId));
@@ -190,8 +201,10 @@ export const countMemberWithRole = async (roleId: string) => {
   return rows.length;
 };
 
-export const updateRoleName = async (roleId: string, roleName: string) => {
-  const [updatedRole] = await db
+export const updateRoleName = async (roleId: string, roleName: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+
+  const [updatedRole] = await database
     .update(roles)
     .set({ name: roleName })
     .where(eq(roles.id, roleId))

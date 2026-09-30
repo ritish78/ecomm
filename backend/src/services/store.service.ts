@@ -21,7 +21,11 @@ import {
 import { UpdateStoreInput } from "../schema/store.schema";
 import { ConflictError, ForbiddenError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
-import { assertCanActOnMember, assertCanActOnRole } from "./storeAuthorization.service";
+import {
+  assertCanActOnMember,
+  assertCanActOnRole,
+  withStoreAuthorizationTransaction,
+} from "./storeAuthorization.service";
 
 /**
  * @param {string} userId - id of the user creating the store
@@ -79,7 +83,7 @@ export const hasStorePermissionService = async (
  * @param {string} storeId - id of the store to add the member to
  * @param {string} email - email of the user to add as a member
  * @param {string} roleId - id of the role to assign to the user
- * @returns {Promise<StoreMember>} - the added store member
+ * @returns - the added store member
  */
 export const addMemberToStoreService = async (
   currentUserId: string,
@@ -87,97 +91,84 @@ export const addMemberToStoreService = async (
   email: string,
   roleId: string,
 ) => {
-  const storeFromDatabase = await getStoreById(storeId);
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "members:add", async (tx) => {
+    //the helper has already checked that the store exists and
+    //that the current user still has permission to add members.
 
-  if (!storeFromDatabase) {
-    throw new NotFoundError(`Store of id ${storeId} not found!`);
-  }
+    //we check that the requested role belongs to this store or is global,
+    //and that the current user is allowed to assign it.
+    await assertCanActOnRole(currentUserId, storeId, roleId, tx);
 
-  //we check if the new member that is being added does not have
-  //higher or same level of role/permissions of the user.
-  //if the new member has higher or same level of role/permissions then we throw an error.
-  //the helper also checks that a custom role belongs to this store.
-  await assertCanActOnRole(currentUserId, storeId, roleId);
+    const userFromDatabase = await findUserByEmail(email, tx);
 
-  const userFromDatabase = await findUserByEmail(email);
+    if (!userFromDatabase) {
+      throw new NotFoundError(`User of provided email: ${email} not found!`);
+    }
 
-  if (!userFromDatabase) {
-    throw new NotFoundError(`User of provided email: ${email} not found!`);
-  }
+    const userIsAlreadyMember = await isUserMemberOfStore(storeId, userFromDatabase.id, tx);
 
-  const userIsAlreadyMember = await isUserMemberOfStore(storeId, userFromDatabase.id);
+    if (userIsAlreadyMember) {
+      throw new ConflictError("User to add is already member of the store!");
+    }
 
-  if (userIsAlreadyMember) {
-    throw new ConflictError("User to add is already member of the store!");
-  }
+    const member = await addMemberToStore(storeId, userFromDatabase.id, roleId, tx);
 
-  //finally, if the user is not already a member of the store and
-  //the new member does not have higher or same level of role/permissions
-  //of the user, then we add the new member to the store.
-  const member = await addMemberToStore(storeId, userFromDatabase.id, roleId);
+    //we keep the unique constraint and conflict handling as an
+    //additional database safeguard against duplicate memberships.
+    if (!member) {
+      throw new ConflictError("User to add is already member of the store!");
+    }
 
-  //another request might have added this user after our membership check.
-  //the unique constraint prevents the duplicate and the repository returns
-  //undefined when that specific conflict occurs.
-  if (!member) {
-    throw new ConflictError("User to add is already member of the store!");
-  }
-
-  return member;
+    return member;
+  });
 };
 
 /**
  * @param {string} storeId - id of the store to remove the member from
  * @param {string} currentUserId - id of the user performing the removal
  * @param {string} targetUserId - id of the member to remove
- * @returns {Promise<StoreMember>} - the removed store member
+ * @returns - the removed store member
  */
-export const removeMemberFromStoreService = async (storeId: string, currentUserId: string, targetUserId: string) => {
-  //checking to see if the user wants to remove themselves from the store
-  if (currentUserId === targetUserId) {
-    throw new ForbiddenError("You are not allowed to remove yourself from the store!");
-  }
+export const removeMemberFromStoreService = async (
+  storeId: string,
+  currentUserId: string,
+  targetUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "members:remove", async (tx) => {
+    //checking to see if the user wants to remove themselves from the store.
+    if (currentUserId === targetUserId) {
+      throw new ForbiddenError("You are not allowed to remove yourself from the store!");
+    }
 
-  const storeFromDatabase = await getStoreById(storeId);
+    //this checks that the target is a member and that the current
+    //user is allowed to act on their current role.
+    await assertCanActOnMember(currentUserId, storeId, targetUserId, tx);
 
-  if (!storeFromDatabase) {
-    throw new NotFoundError(`Store of id ${storeId} not found!`);
-  }
+    const targetUserMembership = await getStoreMembershipWithPermission(targetUserId, storeId, tx);
 
-  const userIsMember = await isUserMemberOfStore(storeId, targetUserId);
+    if (!targetUserMembership) {
+      throw new NotFoundError("User to remove is not member of this store!");
+    }
 
-  if (!userIsMember) {
-    throw new NotFoundError("User to remove is not member of this store!");
-  }
+    //our current implementation uses store:remove to identify a protected
+    //owner membership. This restriction also applies to platform admins.
+    const targetIsOwnerOfStore = targetUserMembership.permissions.includes("store:remove");
 
-  //checking to see if the current user is trying to remove user that is above them
-  await assertCanActOnMember(currentUserId, storeId, targetUserId);
+    if (targetIsOwnerOfStore) {
+      throw new ForbiddenError("You can not remove owner of the store through member management!");
+    }
 
-  const targetUserMembership = await getStoreMembershipWithPermission(targetUserId, storeId);
+    //role assignment uses the same store lock, so the target's role
+    //can not change between our hierarchy check and this removal.
+    const removedMember = await removeMemberFromStore(storeId, targetUserId, tx);
 
-  if (!targetUserMembership) {
-    throw new NotFoundError("User to remove is not member of this store!");
-  }
+    if (!removedMember) {
+      throw new NotFoundError("User to remove is not member of this store!");
+    }
 
-  //checking to see if the current user is trying to remove owner of the store.
-  //our current implementation uses store:remove to identify a protected
-  //owner membership. This restriction also applies to platform admins.
-  const targetIsOwnerOfStore = targetUserMembership.permissions.includes("store:remove");
-
-  if (targetIsOwnerOfStore) {
-    throw new ForbiddenError("You can not remove owner of the store through member management!");
-  }
-
-  const removedMember = await removeMemberFromStore(storeId, targetUserId);
-
-  //the member might have been removed by another request after our checks.
-  //we should not return a success response when nothing was removed.
-  if (!removedMember) {
-    throw new NotFoundError("User to remove is not member of this store!");
-  }
-
-  return removedMember;
-};;
+    return removedMember;
+  });
+};
 
 export const getStoreByIdOrSlugService = async (identifier: string) => {
   const store = await findStoreByIdOrSlug(identifier);
@@ -207,18 +198,17 @@ export const updateStoreByIdService = async (storeId: string, storeInfo: UpdateS
 //on a second thougth while scrolling, it has been a while since I returned back to this project
 //should we delete the store outright? There will be products, orders and members associated to
 //that store. By deleting the store, we are removing just the record of the table.
-export const deleteStoreByIdService = async (storeId: string) => {
-  //same like in above updateStoreByIdService function, we are using
-  //findStoreByIdOrSlug function to check if the store of the provided id exists.
-  const store = await findStoreByIdOrSlug(storeId);
+export const deleteStoreByIdService = async (storeId: string, currentUserId: string) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "store:remove", async (tx) => {
+    const deletedStore = await deleteStoreById(storeId, tx);
 
-  if (!store) {
-    throw new NotFoundError(`Store of id ${storeId} not found!`);
-  }
+    if (!deletedStore) {
+      throw new NotFoundError(`Store of id ${storeId} not found!`);
+    }
 
-  return deleteStoreById(storeId);
+    return deletedStore;
+  });
 };
-
 /**
  * @param {string} storeId - id of the store to get members from
  * @param {string} currentUserId - id of the user requesting the members

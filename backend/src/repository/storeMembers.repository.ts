@@ -31,8 +31,10 @@ export const addMemberToStore = async (storeId: string, userId: string, roleId: 
  * @param {string} userId - id of the user to check
  * @returns {Promise<boolean>} - true if the user is a member of the store, false otherwise
  */
-export const isUserMemberOfStore = async (storeId: string, userId: string) => {
-  const [userFromStore] = await db
+export const isUserMemberOfStore = async (storeId: string, userId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+
+  const [userFromStore] = await database
     .select({ id: storeMembers.id })
     .from(storeMembers)
     .where(and(eq(storeMembers.storeId, storeId), eq(storeMembers.userId, userId)))
@@ -41,8 +43,10 @@ export const isUserMemberOfStore = async (storeId: string, userId: string) => {
   return Boolean(userFromStore);
 };
 
-export const removeMemberFromStore = async (storeId: string, userId: string) => {
-  const [removedUser] = await db
+export const removeMemberFromStore = async (storeId: string, userId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+
+  const [removedUser] = await database
     .delete(storeMembers)
     .where(and(eq(storeMembers.storeId, storeId), eq(storeMembers.userId, userId)))
     .returning();

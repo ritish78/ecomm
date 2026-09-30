@@ -11,7 +11,7 @@ import {
 } from "../services/store.service";
 import { AuthError, BadRequestError } from "../utils/error";
 import { createStoreSchema, updateStoreSchema } from "../schema/store.schema";
-import { CreateProductInput, filterProductSchema, updateProductSchema } from "../schema/product.schema";
+import { createProductSchema, filterProductSchema, updateProductSchema } from "../schema/product.schema";
 import {
   createProductService,
   deleteProductByIdService,
@@ -96,9 +96,10 @@ export const createProductListingController = async (req: Request, res: Response
     console.log("Creating product!");
     const storeId = req.params.storeId as string;
 
-    const body = req.body as CreateProductInput;
+    const userInput = createProductSchema.parse(req.body);
+    // const body = req.body as CreateProductInput;
 
-    const result = await createProductService(storeId, body);
+    const result = await createProductService(storeId, userInput);
 
     return res.status(201).send({ message: "Product Created successfully!", ...result });
   } catch (error) {
@@ -291,11 +292,18 @@ export const updateStoreController = async (req: Request, res: Response, next: N
  */
 export const deleteStoreController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.params.storeId || !isUuid(req.params.storeId as string)) {
+    const storeId = req.params.storeId as string;
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      throw new AuthError("Not logged in! Login in to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
       throw new BadRequestError("Invalid store id provided!");
     }
 
-    const deletedStore = await deleteStoreByIdService(req.params.storeId as string);
+    const deletedStore = await deleteStoreByIdService(storeId, currentUserId);
 
     return res.status(200).send({ message: "Store deleted successfully!", store: deletedStore });
   } catch (error) {
@@ -367,4 +375,4 @@ export const updateProductListingController = async (req: Request, res: Response
   } catch (error) {
     next(error);
   }
-}
+};

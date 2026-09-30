@@ -1,5 +1,5 @@
 import { and, eq, gte } from "drizzle-orm";
-import db from "../db";
+import db, { Tx } from "../db";
 import { User, users } from "../models/users.model";
 import { refreshTokens } from "../models/resfreshTokens.model";
 import hashPassword from "../utils/hashPassword";
@@ -9,8 +9,10 @@ import { RefreshToken } from "../types/refreshTokens.type";
  * @param {string} email - email to use to search the user
  * @returns {User | null}
  */
-export const findUserByEmail = async (email: string): Promise<User | null> => {
-  const [userFromDatabase] = await db.select().from(users).where(eq(users.email, email));
+export const findUserByEmail = async (email: string, tx?: Tx): Promise<User | null> => {
+  const database = tx ? tx : db;
+
+  const [userFromDatabase] = await database.select().from(users).where(eq(users.email, email));
 
   return userFromDatabase;
 };
