@@ -2,9 +2,6 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import db, { Tx } from "../db";
 import { ProductVariant, productVariants } from "../models/productVariant.model";
 import { productVariantHistory } from "../models/productVariantHistory.model";
-import { FilterProductVariantHistoryInput } from "../schema/productVariantHistory.schema";
-import { findStoreProductByStoreIdAndProductId } from "./product.repository";
-import { NotFoundError } from "../utils/error";
 
 export const createProductVariantHistory = async (
   tx: Tx,
@@ -89,29 +86,4 @@ export const findProductVariantById = async (productId: string, variantId: strin
     .limit(1);
 
   return productVariantFromDatabase;
-};
-
-export const getProductVariantHistoryService = async (
-  storeId: string,
-  productId: string,
-  variantId: string,
-  filters: FilterProductVariantHistoryInput,
-) => {
-  //the middleware checks for product:edit permission
-  //we then have to check if the product belongs to the store
-  const productFromStore = await findStoreProductByStoreIdAndProductId(storeId, productId);
-
-  if (!productFromStore) {
-    throw new NotFoundError("Product not found in this store!");
-  }
-
-  //an empty history and a missing variant are different cases.
-  //an existing variant with no edits should return an empty history.
-  const productVariantFromDatabase = await findProductVariantById(productId, variantId);
-
-  if (!productVariantFromDatabase) {
-    throw new NotFoundError("Product variant not found!");
-  }
-
-  return getProductVariantHistoryByVariantId(productId, variantId, filters.page, filters.limit);
 };

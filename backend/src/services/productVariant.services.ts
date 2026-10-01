@@ -8,7 +8,12 @@ import {
   getProductVariantsForManagement,
   updateProductVariantById,
 } from "../repository/product.repository";
-import { createProductVariantHistory } from "../repository/productVariantHistory.repository";
+import {
+  createProductVariantHistory,
+  findProductVariantById,
+  getProductVariantHistoryByVariantId,
+} from "../repository/productVariantHistory.repository";
+import { FilterProductVariantHistoryInput } from "../schema/productVariantHistory.schema";
 import { AddProductVariantInput, UpdateProductVariantInput } from "../schema/productVariants.schema";
 import { ConflictError, NotFoundError } from "../utils/error";
 
@@ -159,3 +164,29 @@ export const updateProductVariantByIdService = async (
     throw error;
   }
 };
+
+export const getProductVariantHistoryService = async (
+  storeId: string,
+  productId: string,
+  variantId: string,
+  filters: FilterProductVariantHistoryInput,
+) => {
+  //the middleware checks for product:edit permission
+  //we then have to check if the product belongs to the store
+  const productFromStore = await findStoreProductByStoreIdAndProductId(storeId, productId);
+
+  if (!productFromStore) {
+    throw new NotFoundError("Product not found in this store!");
+  }
+
+  //an empty history and a missing variant are different cases.
+  //an existing variant with no edits should return an empty history.
+  const productVariantFromDatabase = await findProductVariantById(productId, variantId);
+
+  if (!productVariantFromDatabase) {
+    throw new NotFoundError("Product variant not found!");
+  }
+
+  return getProductVariantHistoryByVariantId(productId, variantId, filters.page, filters.limit);
+};
+

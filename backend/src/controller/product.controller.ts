@@ -7,12 +7,12 @@ import { getProductHistoryService } from "../services/productHistory.services";
 import { filterProductHistorySchema } from "../schema/productHistory.schema";
 import {
   addProductVariantService,
+  getProductVariantHistoryService,
   getProductVariantsForManagementService,
   updateProductVariantByIdService,
 } from "../services/productVariant.services";
 import { addProductVariantSchema, updateProductVariantSchema } from "../schema/productVariants.schema";
 import { filterProductVariantHistorySchema } from "../schema/productVariantHistory.schema";
-import { getProductVariantHistoryService } from "../repository/productVariantHistory.repository";
 
 /**
  * @route               /api/v1/products/:identifier
@@ -198,6 +198,12 @@ export const updateProductVariantController = async (req: Request, res: Response
   }
 }
 
+/**
+ * @route               /api/v1/stores/:storeId/products/:productId/variants/:variantId/history
+ * @method              GET
+ * @description         Get previous values saved when a product variant was edited
+ * @access              product:edit
+ */
 export const getProductVariantHistoryController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const storeId = req.params.storeId as string;
@@ -221,9 +227,10 @@ export const getProductVariantHistoryController = async (req: Request, res: Resp
       throw new BadRequestError("Please provide correct variant id!");
     }
 
-    const userInput = filterProductVariantHistorySchema.parse(req.body);
+    const userInput = filterProductVariantHistorySchema.parse(req.query);
 
-    //again like the above functions, this service takes care of permissions and field endpoints
+    //the middleware checks product:edit permission. the service checks that the
+    //product belongs to the store and that the variant belongs to the product
     const historyOfProductVariant = await getProductVariantHistoryService(
       storeId,
       productId,
