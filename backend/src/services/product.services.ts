@@ -14,6 +14,7 @@ import {
   updateProductById,
 } from "../repository/product.repository";
 import { createProductHistory, hasProductHistory } from "../repository/productHistory.repository";
+import { hasProductVariantHistory } from "../repository/productVariantHistory.repository";
 import { CreateProductInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
 import { BadRequestError, ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
@@ -110,8 +111,14 @@ export const deleteProductByIdService = async (productId: string, storeId: strin
 
      const productHasHistory = await hasProductHistory(tx, productId);
 
+     const productVariantHasHistory = await hasProductVariantHistory(tx, productId);
+
      if (productHasHistory) {
        throw new ConflictError("This product has edit history and can not be permanently deleted!");
+     }
+
+     if (productVariantHasHistory) {
+       throw new ConflictError("This product has variant edit history and can not be permanently deleted!");
      }
 
      const deletedProduct = await deleteProductById(productId, tx);

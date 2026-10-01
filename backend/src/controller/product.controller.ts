@@ -11,6 +11,8 @@ import {
   updateProductVariantByIdService,
 } from "../services/productVariant.services";
 import { addProductVariantSchema, updateProductVariantSchema } from "../schema/productVariants.schema";
+import { filterProductVariantHistorySchema } from "../schema/productVariantHistory.schema";
+import { getProductVariantHistoryService } from "../repository/productVariantHistory.repository";
 
 /**
  * @route               /api/v1/products/:identifier
@@ -182,7 +184,13 @@ export const updateProductVariantController = async (req: Request, res: Response
     const userInput = updateProductVariantSchema.parse(req.body);
 
     //similar to the above controller, the service takes care of permissions and field endpoints
-    const variant = await updateProductVariantByIdService(storeId, productId, variantId, userInput);
+    const variant = await updateProductVariantByIdService(
+      storeId,
+      productId,
+      variantId,
+      userInput,
+      currentUserId,
+    );
 
     return res.status(200).send({ message: "Product variant updated successfully!", variant });
   } catch (error) {
@@ -190,4 +198,43 @@ export const updateProductVariantController = async (req: Request, res: Response
   }
 }
 
+export const getProductVariantHistoryController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+    const variantId = req.params.variantId as string;
+    const currentUserId = req.user?.id;
 
+    if (!currentUserId) {
+      throw new AuthError("Please login to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Please provide correct store id!");
+    }
+
+    if (!productId || !isUuid(productId)) {
+      throw new BadRequestError("Please provide correct product id!");
+    }
+
+    if (!variantId || !isUuid(variantId)) {
+      throw new BadRequestError("Please provide correct variant id!");
+    }
+
+    const userInput = filterProductVariantHistorySchema.parse(req.body);
+
+    //again like the above functions, this service takes care of permissions and field endpoints
+    const historyOfProductVariant = await getProductVariantHistoryService(
+      storeId,
+      productId,
+      variantId,
+      userInput,
+    );
+
+    return res
+      .status(200)
+      .send({ message: "History of product variant retrieved successfully!", historyOfProductVariant });
+  } catch (error) {
+    next(error);
+  }
+};

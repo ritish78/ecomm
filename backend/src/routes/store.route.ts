@@ -28,6 +28,7 @@ import {
 import {
   addProductVariantController,
   getProductHistoryController,
+  getProductVariantHistoryController,
   getProductVariantsForManagementController,
   updateProductVariantController,
 } from "../controller/product.controller";
@@ -133,6 +134,13 @@ router.patch(
   authenticate,
   requirePermission("product:edit"),
   updateProductVariantController,
+);
+
+router.get(
+  "/:storeId/products/:productId/variants/:variantId/history",
+  authenticate,
+  requirePermission("product:edit"),
+  getProductVariantHistoryController,
 );
 
 export default router;

@@ -4,7 +4,7 @@ import {
   getStoreMembershipWithPermission,
   hasStorePermission,
 } from "../repository/store.repository";
-import { hasPlatformRole, hasPlatformRoleInTransaction } from "../repository/platformMember.repository";
+import { hasPlatformRoleInTransaction } from "../repository/platformMember.repository";
 import { ForbiddenError, NotFoundError } from "../utils/error";
 import { Permissions } from "../config/permissions";
 import db, { Tx } from "../db";
@@ -88,7 +88,12 @@ export const withStoreAuthorizationTransaction = async <T>(
   );
 };
 
-export const assertCanActOnRole = async (currentUserId: string, storeId: string, targetRoleId: string, tx: Tx) => {
+export const assertCanActOnRole = async (
+  currentUserId: string,
+  storeId: string,
+  targetRoleId: string,
+  tx: Tx,
+) => {
   const targetRole = await getRolesWithPermission(targetRoleId, tx);
 
   if (!targetRole || (targetRole.storeId !== null && targetRole.storeId !== storeId)) {
@@ -96,8 +101,10 @@ export const assertCanActOnRole = async (currentUserId: string, storeId: string,
   }
 
   //Admins bypass hierarchy, but never the store boundary.
-  if (await hasPlatformRole(currentUserId, "admin")) return;
-
+  //we check platform membership using the same transaction.
+  if (await hasPlatformRoleInTransaction(tx, currentUserId, "admin")) {
+    return;
+  }
   const membership = await getStoreMembershipWithPermission(currentUserId, storeId, tx);
 
   if (
@@ -107,7 +114,7 @@ export const assertCanActOnRole = async (currentUserId: string, storeId: string,
   ) {
     throw new ForbiddenError("You can only act on roles with fewer permissions than your own!");
   }
-};;
+};
 
 export const assertCanActOnMember = async (
   currentUserId: string,
@@ -125,7 +132,10 @@ export const assertCanActOnMember = async (
     throw new NotFoundError("The target user is not a member of this store!");
   }
 
-  if (await hasPlatformRole(currentUserId, "admin")) return;
+  //we check platform membership using the same transaction.
+  if (await hasPlatformRoleInTransaction(tx, currentUserId, "admin")) {
+    return;
+  }
 
   const actor = await getStoreMembershipWithPermission(currentUserId, storeId, tx);
 

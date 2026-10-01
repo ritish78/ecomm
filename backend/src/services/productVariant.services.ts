@@ -8,6 +8,7 @@ import {
   getProductVariantsForManagement,
   updateProductVariantById,
 } from "../repository/product.repository";
+import { createProductVariantHistory } from "../repository/productVariantHistory.repository";
 import { AddProductVariantInput, UpdateProductVariantInput } from "../schema/productVariants.schema";
 import { ConflictError, NotFoundError } from "../utils/error";
 
@@ -69,6 +70,7 @@ export const updateProductVariantByIdService = async (
   productId: string,
   variantId: string,
   variantInfo: UpdateProductVariantInput,
+  currentUserId: string,
 ) => {
   try {
     return await db.transaction(async (tx) => {
@@ -128,6 +130,9 @@ export const updateProductVariantByIdService = async (
       if (shouldDiscontinue) {
         variantInfoToUpdate.discontinue = true;
       }
+
+      //we save the previous product variant value in the database
+      await createProductVariantHistory(tx, variantFromDatabase, currentUserId);
 
       const updatedVariant = await updateProductVariantById(tx, productId, variantId, variantInfoToUpdate);
 
