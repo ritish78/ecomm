@@ -31,6 +31,7 @@ import {
   getProductVariantHistoryController,
   getProductVariantsForManagementController,
   updateProductVariantController,
+  updateProductVariantPriceController,
 } from "../controller/product.controller";
 
 const router = Router();
@@ -141,6 +142,13 @@ router.get(
   authenticate,
   requirePermission("product:edit"),
   getProductVariantHistoryController,
+);
+
+router.patch(
+  "/:storeId/products/:productId/variants/:variantId/price",
+  authenticate,
+  requirePermission("product_price:update"),
+  updateProductVariantPriceController,
 );
 
 export default router;

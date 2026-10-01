@@ -7,6 +7,7 @@ import {
   getProductStoreLinksForUpdate,
   getProductVariantsForManagement,
   updateProductVariantById,
+  updateProductVariantPriceById,
 } from "../repository/product.repository";
 import {
   createProductVariantHistory,
@@ -14,8 +15,13 @@ import {
   getProductVariantHistoryByVariantId,
 } from "../repository/productVariantHistory.repository";
 import { FilterProductVariantHistoryInput } from "../schema/productVariantHistory.schema";
-import { AddProductVariantInput, UpdateProductVariantInput } from "../schema/productVariants.schema";
+import {
+  AddProductVariantInput,
+  UpdateProductVariantInput,
+  UpdateProductVariantPriceInput,
+} from "../schema/productVariants.schema";
 import { ConflictError, NotFoundError } from "../utils/error";
+import { withStoreAuthorizationTransaction } from "./storeAuthorization.service";
 
 export const assertCanManageProductVariants = async (tx: Tx, storeId: string, productId: string) => {
   //we lock the product before we lock its variant
@@ -188,5 +194,50 @@ export const getProductVariantHistoryService = async (
   }
 
   return getProductVariantHistoryByVariantId(productId, variantId, filters.page, filters.limit);
+};
+
+export const updateProductVariantPriceByIdService = async (
+  storeId: string,
+  productId: string,
+  variantId: string,
+  priceInfo: UpdateProductVariantPriceInput,
+  currentUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product_price:update", async (tx) => {
+    //we lock the store and we recheck the permissions
+    //we then lock the product and we check if it belongs to the store
+    await assertCanManageProductVariants(tx, storeId, productId);
+
+    const productVariantFromDatabase = await findProductVariantForUpdate(tx, productId, variantId);
+
+    if (!productVariantFromDatabase) {
+      throw new NotFoundError("Variant not found in this product!");
+    }
+
+    //we get the numeric column as strings from the database
+    //we want to say price '17' is equal to '17.00'
+    const priceHasChanged =
+      priceInfo.price !== undefined && Number(priceInfo.price) !== Number(productVariantFromDatabase.price);
+
+    if (!priceHasChanged) {
+      return productVariantFromDatabase;
+    }
+
+    //we will allow the user to change the price of the discontinued variant
+    //they could maybe put it as on sale to sell their remaining stock
+    //while still having its availability and discontinued date
+
+    //we also have to save the previous product variant value
+    //in our database before we update the price
+    await createProductVariantHistory(tx, productVariantFromDatabase, currentUserId);
+
+    const updatedVariant = await updateProductVariantPriceById(tx, productId, variantId, priceInfo.price);
+
+    if (!updatedVariant) {
+      throw new NotFoundError("Variant to update not found!");
+    }
+
+    return updatedVariant;
+  });
 };
 

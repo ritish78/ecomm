@@ -10,8 +10,13 @@ import {
   getProductVariantHistoryService,
   getProductVariantsForManagementService,
   updateProductVariantByIdService,
+  updateProductVariantPriceByIdService,
 } from "../services/productVariant.services";
-import { addProductVariantSchema, updateProductVariantSchema } from "../schema/productVariants.schema";
+import {
+  addProductVariantSchema,
+  updateProductVariantPriceSchema,
+  updateProductVariantSchema,
+} from "../schema/productVariants.schema";
 import { filterProductVariantHistorySchema } from "../schema/productVariantHistory.schema";
 
 /**
@@ -245,3 +250,50 @@ export const getProductVariantHistoryController = async (req: Request, res: Resp
     next(error);
   }
 };
+
+/**
+ * @route               /api/v1/stores/:storeId/products/:productId/variants/:variantId/price
+ * @method              PATCH
+ * @description         Update the price of a product variant
+ * @access              product_price:update
+ */
+export const updateProductVariantPriceController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+    const variantId = req.params.variantId as string;
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      throw new AuthError("Please login to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Please provide correct store id!");
+    }
+
+    if (!productId || !isUuid(productId)) {
+      throw new BadRequestError("Please provide correct product id!");
+    }
+
+    if (!variantId || !isUuid(variantId)) {
+      throw new BadRequestError("Please provide correct variant id!");
+    }
+
+    const userInput = updateProductVariantPriceSchema.parse(req.body);
+
+    //the service then rechecks the permissions inside the transaction and
+    //also saves the previous variant before we update the price
+    const updatedVariant = await updateProductVariantPriceByIdService(
+      storeId,
+      productId,
+      variantId,
+      userInput,
+      currentUserId,
+    );
+
+    return res.status(200).send({ message: "Product variant price updated successfully!", updatedVariant });
+  } catch (error) {
+    next(error);
+  }
+}

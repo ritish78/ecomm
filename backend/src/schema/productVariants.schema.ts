@@ -42,5 +42,12 @@ export const updateProductVariantSchema = z
     error: "Please provide atleast one field to update!",
   });
 
+export const updateProductVariantPriceSchema = z
+  .object({
+    price: decimalValueSchema,
+  })
+  .strict();
+
 export type AddProductVariantInput = z.infer<typeof addProductVariantSchema>;
 export type UpdateProductVariantInput = z.infer<typeof updateProductVariantSchema>;
+export type UpdateProductVariantPriceInput = z.infer<typeof updateProductVariantPriceSchema>;
