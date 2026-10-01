@@ -1,3 +1,4 @@
+import { MAX_VARIANT_STOCK } from "../config/product";
 import db, { Tx } from "../db";
 import {
   addProductVariant,
@@ -8,15 +9,18 @@ import {
   getProductVariantsForManagement,
   updateProductVariantById,
   updateProductVariantPriceById,
+  updateProductVariantStockById,
 } from "../repository/product.repository";
 import {
   createProductVariantHistory,
   findProductVariantById,
+  findProductVariantHistoryByRequestId,
   getProductVariantHistoryByVariantId,
 } from "../repository/productVariantHistory.repository";
 import { FilterProductVariantHistoryInput } from "../schema/productVariantHistory.schema";
 import {
   AddProductVariantInput,
+  CreateProductVariantStockAdjustmentInput,
   UpdateProductVariantInput,
   UpdateProductVariantPriceInput,
 } from "../schema/productVariants.schema";
@@ -143,7 +147,12 @@ export const updateProductVariantByIdService = async (
       }
 
       //we save the previous product variant value in the database
-      await createProductVariantHistory(tx, variantFromDatabase, currentUserId);
+      await createProductVariantHistory(tx, variantFromDatabase, currentUserId, {
+        storeId,
+        changeType: "details",
+        reason: variantInfo.reason,
+        note: variantInfo.note,
+      });
 
       const updatedVariant = await updateProductVariantById(tx, productId, variantId, variantInfoToUpdate);
 
@@ -229,7 +238,12 @@ export const updateProductVariantPriceByIdService = async (
 
     //we also have to save the previous product variant value
     //in our database before we update the price
-    await createProductVariantHistory(tx, productVariantFromDatabase, currentUserId);
+    await createProductVariantHistory(tx, productVariantFromDatabase, currentUserId, {
+      storeId,
+      changeType: "price",
+      reason: priceInfo.reason,
+      note: priceInfo.note,
+    });
 
     const updatedVariant = await updateProductVariantPriceById(tx, productId, variantId, priceInfo.price);
 
@@ -241,3 +255,101 @@ export const updateProductVariantPriceByIdService = async (
   });
 };
 
+export const createProductVariantStockAdjustmentService = async (
+  storeId: string,
+  productId: string,
+  variantId: string,
+  adjustmentInfo: CreateProductVariantStockAdjustmentInput,
+  currentUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product_stock:update", async (tx) => {
+    //we lock the store and we recheck the permissions
+    //we then lock the product and we check if it belongs to the store
+    await assertCanManageProductVariants(tx, storeId, productId);
+
+    const productVariantFromDatabase = await findProductVariantForUpdate(tx, productId, variantId);
+
+    if (!productVariantFromDatabase) {
+      throw new NotFoundError("Variant not found in this product!");
+    }
+
+    //we then check for a previous stock adjustment with the same requestId
+    const previousStockAdjustment = await findProductVariantHistoryByRequestId(
+      tx,
+      storeId,
+      adjustmentInfo.requestId,
+    );
+
+    if (previousStockAdjustment) {
+      const isSameRequest =
+        previousStockAdjustment.changeType === "stock_adjustment" &&
+        previousStockAdjustment.productId === productVariantFromDatabase.productId &&
+        previousStockAdjustment.productVariantId === productVariantFromDatabase.id &&
+        previousStockAdjustment.changedBy === currentUserId &&
+        previousStockAdjustment.quantityChange === adjustmentInfo.quantityChange &&
+        previousStockAdjustment.reason === adjustmentInfo.reason &&
+        previousStockAdjustment.note === (adjustmentInfo.note ?? null);
+
+      if (previousStockAdjustment && isSameRequest) {
+        throw new ConflictError("This stock adjustment request has already been processed!");
+      }
+
+      //we then return the original history entry without changing
+      //the stock or inserting another history entry
+      return {
+        adjustment: previousStockAdjustment,
+        replayed: true,
+      };
+    }
+
+    //retries are handled first because a previous successful stock adjustment
+    //might have happened before the variant was disconitnued
+    if (productVariantFromDatabase.discontinuedAt !== null && adjustmentInfo.reason === "replenishment") {
+      throw new ConflictError("You can not increase stock for a discontinued variant!");
+    }
+
+    const resultingStock = productVariantFromDatabase.stock + adjustmentInfo.quantityChange;
+
+    if (resultingStock < 0) {
+      //should I throw BadRequestError instead?
+      throw new ConflictError("This stock adjustment would make the stock count negative!");
+    }
+
+    if (resultingStock > MAX_VARIANT_STOCK) {
+      throw new ConflictError(
+        "This stock adjustment would make the stock count greater than the maximum stock limit!",
+      );
+    }
+
+    const adjustment = await createProductVariantHistory(tx, productVariantFromDatabase, currentUserId, {
+      storeId,
+      changeType: "stock_adjustment",
+      quantityChange: adjustmentInfo.quantityChange,
+      resultingStock,
+      requestId: adjustmentInfo.requestId,
+      reason: adjustmentInfo.reason,
+      note: adjustmentInfo.note,
+    });
+
+    if (!adjustment) {
+      throw new ConflictError("This stock adjustment request could not be processed!");
+    }
+
+    const updatedProductVariant = await updateProductVariantStockById(
+      tx,
+      productId,
+      variantId,
+      resultingStock,
+    );
+
+    if (!updatedProductVariant) {
+      throw new NotFoundError("Product variant to update not found!");
+    }
+
+    //the history entry and stock updates use the same transaction
+    return {
+      adjustment,
+      replayed: false,
+    };
+  });
+};

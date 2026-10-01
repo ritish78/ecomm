@@ -27,6 +27,7 @@ import {
 } from "../controller/role.controller";
 import {
   addProductVariantController,
+  createProductVariantStockAdjustmentController,
   getProductHistoryController,
   getProductVariantHistoryController,
   getProductVariantsForManagementController,
@@ -149,6 +150,13 @@ router.patch(
   authenticate,
   requirePermission("product_price:update"),
   updateProductVariantPriceController,
+);
+
+router.post(
+  "/:storeId/products/:productId/variants/:variantId/stock-adjustments",
+  authenticate,
+  requirePermission("product_stock:update"),
+  createProductVariantStockAdjustmentController,
 );
 
 export default router;

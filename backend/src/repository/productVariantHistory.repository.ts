@@ -2,11 +2,32 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import db, { Tx } from "../db";
 import { ProductVariant, productVariants } from "../models/productVariant.model";
 import { productVariantHistory } from "../models/productVariantHistory.model";
+import { CreateProductVariantStockAdjustmentInput } from "../schema/productVariants.schema";
+
+//details and price edits can have optional explanations.
+//stock adjustments require the fields needed to record and retry the change.
+export type ProductVariantHistoryEditInfo =
+  | {
+      storeId: string;
+      changeType: "details" | "price";
+      reason?: string;
+      note?: string;
+    }
+  | {
+      storeId: string;
+      changeType: "stock_adjustment";
+      quantityChange: number;
+      resultingStock: number;
+      requestId: string;
+      reason: CreateProductVariantStockAdjustmentInput["reason"];
+      note?: string;
+    };
 
 export const createProductVariantHistory = async (
   tx: Tx,
   variantFromDatabase: ProductVariant,
   currentUserId: string,
+  editInfo: ProductVariantHistoryEditInfo,
 ) => {
   //we use the previous values from the database rather than using the new
   //values sent by the user. the current value is in product variant table
@@ -19,9 +40,25 @@ export const createProductVariantHistory = async (
       unit: variantFromDatabase.unit,
       price: variantFromDatabase.price,
       sku: variantFromDatabase.sku,
+
+      //stock always represents the quantity before this edit.
       stock: variantFromDatabase.stock,
+
       isAvailable: variantFromDatabase.isAvailable,
       discontinuedAt: variantFromDatabase.discontinuedAt,
+
+      storeId: editInfo.storeId,
+      changeType: editInfo.changeType,
+      reason: editInfo.reason ?? null,
+      note: editInfo.note ?? null,
+
+      //ordinary details and price edits do not use adjustment fields.
+      quantityChange: editInfo.changeType === "stock_adjustment" ? editInfo.quantityChange : null,
+
+      resultingStock: editInfo.changeType === "stock_adjustment" ? editInfo.resultingStock : null,
+
+      requestId: editInfo.changeType === "stock_adjustment" ? editInfo.requestId : null,
+
       changedBy: currentUserId,
       changedAt: new Date(),
     })
@@ -86,4 +123,14 @@ export const findProductVariantById = async (productId: string, variantId: strin
     .limit(1);
 
   return productVariantFromDatabase;
+};
+
+export const findProductVariantHistoryByRequestId = async (tx: Tx, storeId: string, requestId: string) => {
+  const [historyOfVariantFromDatabase] = await tx
+    .select()
+    .from(productVariantHistory)
+    .where(and(eq(productVariantHistory.storeId, storeId), eq(productVariantHistory.requestId, requestId)))
+    .limit(1);
+
+  return historyOfVariantFromDatabase;
 };

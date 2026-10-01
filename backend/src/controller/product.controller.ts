@@ -7,6 +7,7 @@ import { getProductHistoryService } from "../services/productHistory.services";
 import { filterProductHistorySchema } from "../schema/productHistory.schema";
 import {
   addProductVariantService,
+  createProductVariantStockAdjustmentService,
   getProductVariantHistoryService,
   getProductVariantsForManagementService,
   updateProductVariantByIdService,
@@ -14,6 +15,7 @@ import {
 } from "../services/productVariant.services";
 import {
   addProductVariantSchema,
+  createProductVariantStockAdjustmentSchema,
   updateProductVariantPriceSchema,
   updateProductVariantSchema,
 } from "../schema/productVariants.schema";
@@ -292,8 +294,72 @@ export const updateProductVariantPriceController = async (req: Request, res: Res
       currentUserId,
     );
 
-    return res.status(200).send({ message: "Product variant price updated successfully!", updatedVariant });
+    //our updateProductVariantController returns a variant. so, we are going to
+    //make this return same as the updateProductVariantController.
+    return res
+      .status(200)
+      .send({ message: "Product variant price updated successfully!", variant: updatedVariant });
   } catch (error) {
     next(error);
   }
 }
+
+
+/**
+ * @route               /api/v1/stores/:storeId/products/:productId/variants/:variantId/stock-adjustments
+ * @method              POST
+ * @description         Adjust variant stock and record the change in variant history
+ * @access              product_stock:update
+ */
+export const createProductVariantStockAdjustmentController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const storeId = req.params.storeId as string;
+    const productId = req.params.productId as string;
+    const variantId = req.params.variantId as string;
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      throw new AuthError("Please login to continue!");
+    }
+
+    if (!storeId || !isUuid(storeId)) {
+      throw new BadRequestError("Please provide correct store id!");
+    }
+
+    if (!productId || !isUuid(productId)) {
+      throw new BadRequestError("Please provide correct product id!");
+    }
+
+    if (!variantId || !isUuid(variantId)) {
+      throw new BadRequestError("Please provide correct variant id!");
+    }
+
+    const userInput =
+      createProductVariantStockAdjustmentSchema.parse(req.body);
+
+    const result = await createProductVariantStockAdjustmentService(
+      storeId,
+      productId,
+      variantId,
+      userInput,
+      currentUserId,
+    );
+
+    //the retry returns the existing history without creating another entry
+    //and the replayed flag is set to true. the client can use this to determine
+    //if the adjustment was already applied or not
+    return res.status(result.replayed ? 200 : 201).send({
+      message: result.replayed
+        ? "Stock adjustment was already applied!"
+        : "Stock adjusted successfully!",
+      adjustment: result.adjustment,
+      replayed: result.replayed,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

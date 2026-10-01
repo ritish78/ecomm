@@ -678,3 +678,19 @@ export const updateProductVariantPriceById = async (
 
   return updatedProductVariant;
 };
+
+export const updateProductVariantStockById = async (
+  tx: Tx,
+  productId: string,
+  variantId: string,
+  stock: number,
+) => {
+  //the service holds the product variant lock
+  const [updatedProductVariant] = await tx
+    .update(productVariants)
+    .set({ stock, updatedAt: new Date() })
+    .where(and(eq(productVariants.productId, productId), eq(productVariants.id, variantId)))
+    .returning();
+
+  return updatedProductVariant;
+};
