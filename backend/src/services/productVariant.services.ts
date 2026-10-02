@@ -290,8 +290,12 @@ export const createProductVariantStockAdjustmentService = async (
         previousStockAdjustment.reason === adjustmentInfo.reason &&
         previousStockAdjustment.note === (adjustmentInfo.note ?? null);
 
-      if (previousStockAdjustment && isSameRequest) {
-        throw new ConflictError("This stock adjustment request has already been processed!");
+      // if (previousStockAdjustment && isSameRequest) {
+      //   throw new ConflictError("This stock adjustment request has already been processed!");
+      // }
+      //the same request id must not be reused for a different adjustment.
+      if (!isSameRequest) {
+        throw new ConflictError("This request id has already been used for a different stock adjustment!");
       }
 
       //we then return the original history entry without changing
