@@ -1,4 +1,3 @@
-import { EXPRESS_SERVER_PORT } from "../config";
 import { MAX_CART_ITEMS } from "../config/cart";
 import db from "../db";
 import {
