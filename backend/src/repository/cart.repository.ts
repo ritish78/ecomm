@@ -32,7 +32,7 @@ export const createCartIfMissingAndLock = async (tx: Tx, currentUserId: string) 
 };
 
 export const getCartItems = async (tx: Tx, cartId: string) => {
-  return tx.select().from(cartItems).where(eq(carts.id, cartId));
+  return tx.select().from(cartItems).where(eq(cartItems.cartId, cartId));
 };
 
 export const findCartListing = async (tx: Tx, storeId: string, variantId: string) => {
@@ -47,7 +47,7 @@ export const findCartListing = async (tx: Tx, storeId: string, variantId: string
       stock: productVariants.stock,
       //   price: productVariants.price,
     })
-    .from(stores)
+    .from(productVariants) //bruh, i was wondering why the cart is not showing up. i used stores join on stores
     .innerJoin(products, eq(products.id, productVariants.productId))
     .innerJoin(storeProducts, eq(storeProducts.productId, products.id))
     .innerJoin(stores, eq(stores.id, storeProducts.storeId))

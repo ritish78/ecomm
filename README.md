@@ -5,6 +5,6 @@
 - Also has role based access control.
 
 
-<img width="2024" height="1651" alt="ecomm_with_discontinued_column_in_product_variants_table" src="https://github.com/user-attachments/assets/e7873c3f-7b44-44b7-b0f0-a0935c8108af" />
+<img width="2024" height="1651" alt="ecomm_with_cart_and_cart_items" src="https://github.com/user-attachments/assets/cdf3cc8c-3aa0-4253-a68d-55ea15e73507" />
 
 

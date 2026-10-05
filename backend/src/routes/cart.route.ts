@@ -12,6 +12,6 @@ const router = Router();
 router.get("/", authenticate, getCartController);
 router.put("/items", authenticate, setCartItemController);
 router.delete("/items/:itemId", authenticate, removeCartItemController);
-router.delete("/", clearCartController);
+router.delete("/", authenticate, clearCartController);
 
 export default router;
