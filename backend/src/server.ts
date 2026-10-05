@@ -8,6 +8,7 @@ import productRoutes from "./routes/product.route";
 import storeRoutes from "./routes/store.route";
 import brandRoutes from "./routes/brand.route";
 import categoriesRoutes from "./routes/categories.route";
+import cartRoutes from "./routes/cart.route";
 
 import { errorHandler } from "./middleware/errorHandler";
 import { FRONTEND_URL } from "./config";
@@ -34,6 +35,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/stores", storeRoutes);
 app.use("/api/v1/brands", brandRoutes);
 app.use("/api/v1/categories", categoriesRoutes);
+app.use("/api/v1/cart", cartRoutes);
 
 app.use(errorHandler);
 
