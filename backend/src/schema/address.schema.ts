@@ -24,7 +24,7 @@ const commonAddressFields = {
   addressLineTwo: optionalAddressText(200),
   locality: z.string().trim().min(1).max(100),
   landmark: optionalAddressText(200),
-  deliveryInstructions: optionalAddressText(500),
+  deliveryInstruction: optionalAddressText(500),
 };
 
 const australianAddressSchema = z

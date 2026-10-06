@@ -22,6 +22,7 @@ export const address = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     label: varchar("label", { length: 50 }),
     recipientName: varchar("recipient_name", { length: 100 }).notNull(),
+    phoneNumber: varchar("phone_number", { length: 16 }).notNull(),
     countryCode: addressCountryEnum("country_code").notNull(),
 
     addressLineOne: varchar("address_line_one", { length: 200 }).notNull(),

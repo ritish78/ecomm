@@ -1,6 +1,7 @@
 import { MAX_ADDRESSES_PER_USER } from "../config/address";
 import db, { Tx } from "../db";
 import {
+  clearDefaultAddress,
   createUserAddress,
   deleteUserAddressById,
   findAddressOwnerForUpdate,
@@ -87,6 +88,9 @@ export const setDefaultAddressByIdService = async (currentUserId: string, addres
     if (addressFromDatabase.isDefault) {
       return addressFromDatabase;
     }
+
+    //we clear the current default address before we update the new address to be default
+    await clearDefaultAddress(tx, currentUserId);
 
     //we first have to clear the already existing default address
     //before we set the new default address
