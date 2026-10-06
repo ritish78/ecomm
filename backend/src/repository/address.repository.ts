@@ -70,10 +70,13 @@ export const clearDefaultAddress = async (tx: Tx, currentUserId: string) => {
 };
 
 export const setDefaultUserAddressById = async (tx: Tx, currentUserId: string, addressId: string) => {
-  await tx
+  const [updatedAddress] = await tx
     .update(address)
     .set({ isDefault: true, updatedAt: new Date() })
-    .where(and(eq(address.id, addressId), eq(address.userId, currentUserId)));
+    .where(and(eq(address.id, addressId), eq(address.userId, currentUserId)))
+    .returning();
+
+  return updatedAddress;
 };
 
 export const deleteUserAddressById = async (tx: Tx, currentUserId: string, addressId: string) => {
