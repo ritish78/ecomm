@@ -18,6 +18,7 @@ import { hasProductVariantHistory } from "../repository/productVariantHistory.re
 import { CreateProductInput, FilterProductInput, UpdateProductInput } from "../schema/product.schema";
 import { BadRequestError, ConflictError, NotFoundError } from "../utils/error";
 import toSlug from "../utils/toSlug";
+import { withStoreAuthorizationTransaction } from "./storeAuthorization.service";
 
 /**
  * @param {string} productId - id of the product to get
@@ -60,8 +61,12 @@ export const getProductsService = async (filterProduct: FilterProductInput) => {
  * @param {CreateProductInput} product - product data to create
  * @returns {Promise<ProductWithVariants>} - the created product with variants
  */
-export const createProductService = async (storeId: string, product: CreateProductInput) => {
-  return db.transaction(async (tx) => {
+export const createProductService = async (
+  storeId: string,
+  product: CreateProductInput,
+  currentUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product:create", async (tx) => {
     const slug = toSlug(product.name);
     const createdProduct = await createProduct(
       tx,
@@ -83,52 +88,52 @@ export const createProductService = async (storeId: string, product: CreateProdu
  * @param {string} storeId - id of the store to delete the product
  * @returns {Promise<Product>} - the deleted product
  */
-export const deleteProductByIdService = async (productId: string, storeId: string) => {
-   return db.transaction(async (tx) => {
-     //we use the same product lock as editing so that a delete and an edit
-     //can not pass their checks independently and modify the product together
-     const productFromDatabase = await findProductForUpdate(tx, productId);
+export const deleteProductByIdService = async (productId: string, storeId: string, currentUserId: string) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product:delete", async (tx) => {
+    //we use the same product lock as editing so that a delete and an edit
+    //can not pass their checks independently and modify the product together
+    const productFromDatabase = await findProductForUpdate(tx, productId);
 
-     if (!productFromDatabase) {
-       throw new NotFoundError(`Product to delete of id ${productId} not found!`);
-     }
+    if (!productFromDatabase) {
+      throw new NotFoundError(`Product to delete of id ${productId} not found!`);
+    }
 
-     const productStoreLinks = await getProductStoreLinksForUpdate(tx, productId);
+    const productStoreLinks = await getProductStoreLinksForUpdate(tx, productId);
 
-     const productBelongsToStore = productStoreLinks.some((storeProduct) => storeProduct.storeId === storeId);
+    const productBelongsToStore = productStoreLinks.some((storeProduct) => storeProduct.storeId === storeId);
 
-     if (!productBelongsToStore) {
-       throw new NotFoundError("Product to delete not found in this store!");
-     }
+    if (!productBelongsToStore) {
+      throw new NotFoundError("Product to delete not found in this store!");
+    }
 
-     //deleting a shared product would also remove it from other stores
-     //we keep the same restriction that we use in the editing endpoint
-     if (productStoreLinks.length > 1) {
-       throw new ConflictError(
-         "This product is linked to multiple stores and can not be deleted through this endpoint!",
-       );
-     }
+    //deleting a shared product would also remove it from other stores
+    //we keep the same restriction that we use in the editing endpoint
+    if (productStoreLinks.length > 1) {
+      throw new ConflictError(
+        "This product is linked to multiple stores and can not be deleted through this endpoint!",
+      );
+    }
 
-     const productHasHistory = await hasProductHistory(tx, productId);
+    const productHasHistory = await hasProductHistory(tx, productId);
 
-     const productVariantHasHistory = await hasProductVariantHistory(tx, productId);
+    const productVariantHasHistory = await hasProductVariantHistory(tx, productId);
 
-     if (productHasHistory) {
-       throw new ConflictError("This product has edit history and can not be permanently deleted!");
-     }
+    if (productHasHistory) {
+      throw new ConflictError("This product has edit history and can not be permanently deleted!");
+    }
 
-     if (productVariantHasHistory) {
-       throw new ConflictError("This product has variant edit history and can not be permanently deleted!");
-     }
+    if (productVariantHasHistory) {
+      throw new ConflictError("This product has variant edit history and can not be permanently deleted!");
+    }
 
-     const deletedProduct = await deleteProductById(productId, tx);
+    const deletedProduct = await deleteProductById(productId, tx);
 
-     if (!deletedProduct) {
-       throw new NotFoundError(`Product to delete of id ${productId} not found!`);
-     }
+    if (!deletedProduct) {
+      throw new NotFoundError(`Product to delete of id ${productId} not found!`);
+    }
 
-     return deletedProduct;
-   });
+    return deletedProduct;
+  });
 };
 
 
@@ -138,7 +143,7 @@ export const updateProductByIdService = async (
   productInfo: UpdateProductInput,
   currentUserId: string,
 ) => {
-  return db.transaction(async (tx) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product:edit", async (tx) => {
     const productFromDatabase = await findProductForUpdate(tx, productId);
 
     if (!productFromDatabase) {

@@ -93,13 +93,17 @@ export const addMembersController = async (req: Request, res: Response, next: Ne
  */
 export const createProductListingController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("Creating product!");
     const storeId = req.params.storeId as string;
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      throw new AuthError("Not Logged in! Please login to continue!");
+    }
 
     const userInput = createProductSchema.parse(req.body);
     // const body = req.body as CreateProductInput;
 
-    const result = await createProductService(storeId, userInput);
+    const result = await createProductService(storeId, userInput, currentUserId);
 
     return res.status(201).send({ message: "Product Created successfully!", ...result });
   } catch (error) {
@@ -117,8 +121,13 @@ export const deleteProductListingController = async (req: Request, res: Response
   try {
     const storeId = req.params.storeId as string;
     const productId = req.params.productId as string;
+    const currentUserId = req.user?.id;
 
-    const result = await deleteProductByIdService(productId, storeId);
+    if (!currentUserId) {
+      throw new AuthError("Not Logged in! Please login to continue!");
+    }
+
+    const result = await deleteProductByIdService(productId, storeId, currentUserId);
 
     return res.status(200).send({ message: "Product deleted successfully!", ...result });
   } catch (error) {

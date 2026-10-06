@@ -64,14 +64,15 @@ export const getCartService = async (currentUserId: string) => {
   //currently the stock belongs to a variant and not to a store
   //for the same variant that belongs to many stores, its
   //requested quantities are counted together
-  const quantitiesByVariant = new Map<string, number>();
+  // const quantitiesByVariant = new Map<string, number>();
 
-  for (const item of rows) {
-    quantitiesByVariant.set(item.variantId, (quantitiesByVariant.get(item.variantId) ?? 0) + item.quantity);
-  }
+  // for (const item of rows) {
+  //   quantitiesByVariant.set(item.variantId, (quantitiesByVariant.get(item.variantId) ?? 0) + item.quantity);
+  // }
 
   const items = rows.map((row) => {
-    const issues = getCartItemIssues(row, quantitiesByVariant.get(row.variantId) ?? row.quantity);
+    // const issues = getCartItemIssues(row, quantitiesByVariant.get(row.variantId) ?? row.quantity);
+    const issues = getCartItemIssues(row, row.quantity);
 
     const unitPrice = row.variant?.price ?? null;
 
@@ -127,7 +128,7 @@ export const getCartService = async (currentUserId: string) => {
     //shows the current cart and is not meant to reserve stock
     readyForCheckout: items.length > 0 && items.every((item) => item.purchaseable),
   };
-};
+}
 
 export const setCartItemService = async (currentUserId: string, itemInfo: SetCartItemInput) => {
   return db.transaction(
@@ -160,13 +161,19 @@ export const setCartItemService = async (currentUserId: string, itemInfo: SetCar
 
       //the user can select the variant from multiple stores
       //but those selection currently share one stock quantity
-      const quantityInOtherSelections = existingItems
-        .filter((item) => item.productVariantId === listing.variantId && item.id !== existingItem?.id)
-        .reduce((total, item) => total + item.quantity, 0);
+      // const quantityInOtherSelections = existingItems
+      //   .filter((item) => item.productVariantId === listing.variantId && item.id !== existingItem?.id)
+      //   .reduce((total, item) => total + item.quantity, 0);
 
-      const requestedVariantQuantity = quantityInOtherSelections + itemInfo.quantity;
+      // const requestedVariantQuantity = quantityInOtherSelections + itemInfo.quantity;
 
-      if (requestedVariantQuantity > listing.stock) {
+      // if (requestedVariantQuantity > listing.stock) {
+      //   throw new ConflictError("The requested cart quantity exceeds the available variant stock!");
+      // }
+
+      //the requested quantity is checked against this store's own variant stock.
+      //setCartItem replaces the saved quantity rather than adding to it.
+      if (itemInfo.quantity > listing.stock) {
         throw new ConflictError("The requested cart quantity exceeds the available variant stock!");
       }
 
