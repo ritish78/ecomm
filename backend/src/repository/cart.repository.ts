@@ -7,8 +7,9 @@ import { productVariants } from "../models/productVariant.model";
 import { storeProducts } from "../models/storeProducts.model";
 import { cartItems } from "../models/cartItem.model";
 
-export const findCartByUserId = async (userId: string) => {
-  const [cartFromDatabase] = await db.select().from(carts).where(eq(carts.userId, userId));
+export const findCartByUserId = async (userId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const [cartFromDatabase] = await database.select().from(carts).where(eq(carts.userId, userId));
   return cartFromDatabase;
 };
 
@@ -96,8 +97,10 @@ export const deleteAllCartItems = async (tx: Tx, cartId: string) => {
   return tx.delete(cartItems).where(eq(cartItems.cartId, cartId)).returning({ id: cartItems.id });
 };
 
-export const getCartItemsWithDetails = async (cartId: string) => {
-  return db
+export const getCartItemsWithDetails = async (cartId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+
+  return database
     .select({
       id: cartItems.id,
       storeId: cartItems.storeId,
@@ -122,6 +125,7 @@ export const getCartItemsWithDetails = async (cartId: string) => {
         weight: productVariants.weight,
         unit: productVariants.unit,
         price: productVariants.price,
+        additionalShippingFee: productVariants.additionalShippingFee,
         stock: productVariants.stock,
         isAvailable: productVariants.isAvailable,
         discontinuedAt: productVariants.discontinuedAt,

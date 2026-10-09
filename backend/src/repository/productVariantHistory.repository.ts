@@ -9,7 +9,7 @@ import { CreateProductVariantStockAdjustmentInput } from "../schema/productVaria
 export type ProductVariantHistoryEditInfo =
   | {
       storeId: string;
-      changeType: "details" | "price";
+      changeType: "details" | "price" | "shipping";
       reason?: string;
       note?: string;
     }
@@ -39,6 +39,7 @@ export const createProductVariantHistory = async (
       weight: variantFromDatabase.weight,
       unit: variantFromDatabase.unit,
       price: variantFromDatabase.price,
+      additionalShippingFee: variantFromDatabase.additionalShippingFee,
       sku: variantFromDatabase.sku,
 
       //stock always represents the quantity before this edit.

@@ -694,3 +694,19 @@ export const updateProductVariantStockById = async (
 
   return updatedProductVariant;
 };
+
+export const updateProductVariantShippingFeeById = async (
+  tx: Tx,
+  productId: string,
+  variantId: string,
+  additionalShippingFee: string,
+) => {
+  const [updatedProductVariant] = await tx
+    .update(productVariants)
+    .set({ additionalShippingFee, updatedAt: new Date() })
+    .where(and(eq(productVariants.productId, productId), eq(productVariants.id, variantId)))
+    .returning();
+
+  return updatedProductVariant;
+};
+

@@ -1,4 +1,4 @@
-import { InferSelectModel } from "drizzle-orm";
+import { InferSelectModel, sql } from "drizzle-orm";
 import {
   varchar,
   timestamp,
@@ -11,6 +11,7 @@ import {
   numeric,
 } from "drizzle-orm/pg-core";
 import { products } from "./products.model.js";
+import { check } from "drizzle-orm/pg-core";
 
 export const unitEnum = pgEnum("unit", ["g", "kg", "ml", "l", "pc"]);
 
@@ -33,12 +34,21 @@ export const productVariants = pgTable(
     //discontinuedAt will track if the product is discontinued and when it was
     //discontinued even if we have stock available for it.
     discontinuedAt: timestamp("discontinued_at"),
+
+    //we are going to add extra shipping fee for each product sold
+    //this is going to be helpful when we are selling a product
+    //whose size is large and/or heavy as well
+    additionalShippingFee: numeric("additional_shipping_fee", { precision: 10, scale: 2 })
+      .default("0.00")
+      .notNull(),
+
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   },
   (table) => [
     index("variant_product_id_index").on(table.productId),
     index("variant_sku_index").on(table.sku),
+    check("additional_shipping_fee_is_positive", sql`${table.additionalShippingFee} >= 0`),
   ],
 );
 

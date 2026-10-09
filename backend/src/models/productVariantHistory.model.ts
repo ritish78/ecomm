@@ -19,6 +19,7 @@ export const variantHistoryChangeTypeEnum = pgEnum("variant_history_change_type"
   "details",
   "price",
   "stock_adjustment",
+  "shipping",
 ]);
 
 export const productVariantHistory = pgTable(
@@ -34,6 +35,11 @@ export const productVariantHistory = pgTable(
     weight: numeric("weight", { precision: 10, scale: 2 }).notNull(),
     unit: unitEnum("unit").notNull(),
     price: numeric("price", { precision: 10, scale: 2 }).notNull(), //decimal or numeric. in products table, it was decimal.
+
+    //adding additional shipping fee column here as well
+    //making this nullable as we already are testing with dummy products
+    //which already fills this table
+    additionalShippingFee: numeric("additional_shipping_fee", { precision: 10, scale: 2 }),
 
     //this remains the stock before the change.
     stock: integer("stock").default(0).notNull(),
