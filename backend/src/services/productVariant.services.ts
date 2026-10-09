@@ -9,6 +9,7 @@ import {
   getProductVariantsForManagement,
   updateProductVariantById,
   updateProductVariantPriceById,
+  updateProductVariantShippingFeeById,
   updateProductVariantStockById,
 } from "../repository/product.repository";
 import {
@@ -24,7 +25,9 @@ import {
   UpdateProductVariantInput,
   UpdateProductVariantPriceInput,
 } from "../schema/productVariants.schema";
-import { ConflictError, NotFoundError } from "../utils/error";
+import { UpdateProductVariantShippingFeeInput } from "../schema/shipping.schema";
+import { ConflictError, NotFoundError, ServerError } from "../utils/error";
+import { priceToMinorUnit } from "../utils/money";
 import { withStoreAuthorizationTransaction } from "./storeAuthorization.service";
 
 export const assertCanManageProductVariants = async (tx: Tx, storeId: string, productId: string) => {
@@ -355,5 +358,57 @@ export const createProductVariantStockAdjustmentService = async (
       adjustment,
       replayed: false,
     };
+  });
+};
+
+export const updateProductVariantShippingFeeByIdService = async (
+  storeId: string,
+  productId: string,
+  variantId: string,
+  shippingInfo: UpdateProductVariantShippingFeeInput,
+  currentUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "product_price:update", async (tx) => {
+    //we are going to check the store permission first, then product ownership
+    //then we lock the product variant
+    await assertCanManageProductVariants(tx, storeId, productId);
+
+    const variantFromDatabase = await findProductVariantForUpdate(tx, productId, variantId);
+
+    if (!variantFromDatabase) {
+      throw new NotFoundError("Product variant not found!");
+    }
+
+    const shippingFeeHasChanged =
+      priceToMinorUnit(shippingInfo.additionalShippingFee) !==
+      priceToMinorUnit(variantFromDatabase.additionalShippingFee);
+
+    if (!shippingFeeHasChanged) {
+      return variantFromDatabase;
+    }
+
+    const historyOfProductVariant = await createProductVariantHistory(
+      tx,
+      variantFromDatabase,
+      currentUserId,
+      { storeId, changeType: "shipping", reason: shippingInfo.reason, note: shippingInfo.note },
+    );
+
+    if (!historyOfProductVariant) {
+      throw new ServerError("Could not save the product variant shipping history!");
+    }
+
+    const updateProductVariant = await updateProductVariantShippingFeeById(
+      tx,
+      productId,
+      variantId,
+      shippingInfo.additionalShippingFee,
+    );
+
+    if (!updateProductVariant) {
+      throw new ServerError("Could not update the product variant shipping fee!");
+    }
+
+    return updateProductVariant;
   });
 };
