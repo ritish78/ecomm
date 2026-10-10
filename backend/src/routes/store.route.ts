@@ -165,12 +165,7 @@ router.post(
   createProductVariantStockAdjustmentController,
 );
 
-router.get(
-  "/:storeId/shipping-settings",
-  authenticate,
-  requirePermission("store:edit"),
-  getStoreShippingSettingsController,
-);
+router.get("/:storeId/shipping-settings", getStoreShippingSettingsController);
 
 router.put(
   "/:storeId/shipping-settings",

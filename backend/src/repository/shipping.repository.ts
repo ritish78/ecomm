@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
-import { Tx } from "../db";
+import db, { Tx } from "../db";
 import { stores } from "../models/store.model";
 import { UpdateStoreShippingInput } from "../schema/shipping.schema";
 
-export const findStoreShippingSettings = async (tx: Tx, storeId: string) => {
-  const [storeFromDatabase] = await tx
+export const findStoreShippingSettings = async (storeId: string, tx?: Tx) => {
+  const database = tx ? tx : db;
+  const [storeFromDatabase] = await database
     .select({
       storeId: stores.id,
       isActive: stores.isActive,

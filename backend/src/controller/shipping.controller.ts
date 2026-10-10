@@ -17,18 +17,19 @@ import { updateProductVariantShippingFeeByIdService } from "../services/productV
  */
 export const getStoreShippingSettingsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const currentUserId = req.user?.id;
+    // const currentUserId = req.user?.id;
     const storeId = req.params.storeId as string;
 
-    if (!currentUserId) {
-      throw new AuthError("Not logged in! Please login to continue!");
-    }
+    // if (!currentUserId) {
+    //   throw new AuthError("Not logged in! Please login to continue!");
+    // }
 
     if (!storeId || !isUuid(storeId)) {
       throw new BadRequestError("Please provide correct store id!");
     }
 
-    const shippingSettings = await getStoreShippingService(storeId, currentUserId);
+    // const shippingSettings = await getStoreShippingService(storeId, currentUserId);
+    const shippingSettings = await getStoreShippingService(storeId);
 
     return res.status(200).send({ message: "Retrieved store shipping details!", shippingSettings });
   } catch (error) {

@@ -7,17 +7,29 @@ import { ConflictError, NotFoundError, ServerError } from "../utils/error";
 import { formatMinorUnits, priceToMinorUnit } from "../utils/money";
 import { withStoreAuthorizationTransaction } from "./storeAuthorization.service";
 
-export const getStoreShippingService = async (storeId: string, currentUserId: string) => {
-  return withStoreAuthorizationTransaction(currentUserId, storeId, "store:edit", async (tx) => {
-    const storeFromDatabase = await findStoreShippingSettings(tx, storeId);
+export const getStoreShippingService = async (storeId: string) => {
+  const storeFromDatabase = await findStoreShippingSettings(storeId);
 
-    if (!storeFromDatabase) {
-      throw new NotFoundError("Store to get shipping info of not found!");
-    }
+  //public shipping settings are only returned for active stores
+  if (!storeFromDatabase || !storeFromDatabase.isActive) {
+    throw new NotFoundError("Store to get shipping info of not found!");
+  }
 
-    return storeFromDatabase;
-  });
-};
+  return {
+    storeId: storeFromDatabase.storeId,
+    shippingFee: storeFromDatabase.shippingFee,
+    freeShippingThreshold: storeFromDatabase.freeShippingThreshold,
+  };
+  //   return withStoreAuthorizationTransaction(currentUserId, storeId, "store:edit", async (tx) => {
+  //     const storeFromDatabase = await findStoreShippingSettings(storeId, tx);
+
+  //     if (!storeFromDatabase) {
+  //       throw new NotFoundError("Store to get shipping info of not found!");
+  //     }
+
+  //     return storeFromDatabase;
+  //   });
+};;;
 
 export const updateStoreShippingSettingService = async (
   storeId: string,
@@ -38,7 +50,7 @@ export const updateStoreShippingSettingService = async (
 export const getStoreShippingQuoteService = async (storeId: string, currentUserId: string) => {
   return db.transaction(
     async (tx) => {
-      const storeFromDatabase = await findStoreShippingSettings(tx, storeId);
+      const storeFromDatabase = await findStoreShippingSettings(storeId, tx);
 
       if (!storeFromDatabase) {
         throw new NotFoundError("Store not found!");
