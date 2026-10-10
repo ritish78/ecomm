@@ -6,7 +6,8 @@ import {
   getStoreShippingService,
   updateStoreShippingSettingService,
 } from "../services/shipping.service";
-import { updateStoreShippingSchema } from "../schema/shipping.schema";
+import { updateProductVariantShippingFeeSchema, updateStoreShippingSchema } from "../schema/shipping.schema";
+import { updateProductVariantShippingFeeByIdService } from "../services/productVariant.services";
 
 /**
  * @route                   /api/v1/stores/:storeId/shipping-settings
@@ -94,3 +95,43 @@ export const getStoreShippingQuoteController = async (req: Request, res: Respons
     next(error);
   }
 };
+
+
+/**
+ * @route                   /api/v1/stores/:storeId/products/:productId/variants/:variantId/shipping-fee
+ * @method                  PATCH
+ * @description             Update the additional shipping fee of a variant
+ * @access                  product_price:update
+ */
+export const updateProductVariantShippingFeeController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const currentUserId = req.user?.id;
+        const storeId = req.params.storeId as string;
+        const productId = req.params.productId as string;
+        const variantId = req.params.variantId as string;
+
+        if (!currentUserId) {
+            throw new AuthError("Not logged in! Please login to continue!");
+        }
+
+        if (!storeId || !isUuid(storeId)) {
+            throw new BadRequestError("Please provide correct store id!");
+        }
+
+        if (!productId || !isUuid(productId)) {
+            throw new BadRequestError("Please provide correct product id!");
+        }
+
+        if (!variantId || !isUuid(variantId)) {
+            throw new BadRequestError("Please provide correct product variant id!");
+        }
+
+        const userInput = updateProductVariantShippingFeeSchema.parse(req.body);
+
+        const updatedProductVariant = await updateProductVariantShippingFeeByIdService(storeId, productId, variantId, userInput, currentUserId);
+
+        return res.status(200).send({ message: "Updated product variant successfully!", variant: updatedProductVariant })
+    } catch (error) {
+        next(error);
+    }
+}

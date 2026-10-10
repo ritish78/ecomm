@@ -34,6 +34,12 @@ import {
   updateProductVariantController,
   updateProductVariantPriceController,
 } from "../controller/product.controller";
+import {
+  getStoreShippingQuoteController,
+  getStoreShippingSettingsController,
+  updateProductVariantShippingFeeController,
+  updateStoreShippingSettingsController,
+} from "../controller/shipping.controller";
 
 const router = Router();
 
@@ -157,6 +163,29 @@ router.post(
   authenticate,
   requirePermission("product_stock:update"),
   createProductVariantStockAdjustmentController,
+);
+
+router.get(
+  "/:storeId/shipping-settings",
+  authenticate,
+  requirePermission("store:edit"),
+  getStoreShippingSettingsController,
+);
+
+router.put(
+  "/:storeId/shipping-settings",
+  authenticate,
+  requirePermission("store:edit"),
+  updateStoreShippingSettingsController,
+);
+
+router.get("/:storeId/shipping-quote", authenticate, getStoreShippingQuoteController);
+
+router.patch(
+  "/:storeId/products/:productId/variants/:variantId/shipping-fee",
+  authenticate,
+  requirePermission("product_price:update"),
+  updateProductVariantShippingFeeController,
 );
 
 export default router;
