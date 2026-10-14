@@ -19,7 +19,7 @@ export const orderItems = pgTable(
       .references(() => orders.id, { onDelete: "cascade" }),
     productId: uuid("product_id")
       .notNull()
-      .references(() => products.id, { onDelete: "cascade" }),
+      .references(() => products.id, { onDelete: "restrict" }),
     productVariantId: uuid("product_variant_id")
       .notNull()
       .references(() => productVariants.id, { onDelete: "restrict" }),
@@ -37,7 +37,7 @@ export const orderItems = pgTable(
 
     //this is the additional shipping fee for one purchased unit
     additionalShippingFee: numeric("additional_shipping_fee", {
-      precision: 10,
+      precision: 24,
       scale: 2,
     }).notNull(),
 

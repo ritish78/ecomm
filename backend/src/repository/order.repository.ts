@@ -68,7 +68,11 @@ export const deleteOrderedCartItems = async (tx: Tx, cartId: string, storeId: st
 export const getOrderItems = async (orderId: string, tx?: Tx) => {
   const database = tx ? tx : db;
 
-  return database.select().from(orderItems).where(eq(orderItems.id, orderId)).orderBy(asc(orderItems.id));
+  return database
+    .select()
+    .from(orderItems)
+    .where(eq(orderItems.orderId, orderId))
+    .orderBy(asc(orderItems.id));
 };
 
 export const findOrderById = async (orderId: string, scope: OrderScope, tx?: Tx) => {

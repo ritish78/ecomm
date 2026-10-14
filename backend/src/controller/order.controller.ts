@@ -27,8 +27,8 @@ export const createOrderController = async (req: Request, res: Response, next: N
     const userInput = createOrderSchema.parse(req.body);
     const result = await createOrderService(currentUserId, userInput);
 
-    return res.status(result?.replayed ? 200 : 201).send({
-      message: result?.replayed ? "Retried the previously placed order!" : "Placed your order successfully!",
+    return res.status(result.replayed ? 200 : 201).send({
+      message: result.replayed ? "Retried the previously placed order!" : "Placed your order successfully!",
       ...result,
     });
   } catch (error) {
