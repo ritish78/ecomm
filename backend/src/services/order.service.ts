@@ -1,13 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
 import { Order, OrderAddressSnapshot } from "../models/order.model";
-import { CreateOrderInput } from "../schema/order.schema";
+import { CreateOrderInput, FilterOrderInput } from "../schema/order.schema";
 import db from "../db";
 import {
   createOrder,
   createOrderItems,
   deleteOrderedCartItems,
+  findOrderById,
   findOrderByRequestId,
   getOrderItems,
+  getOrders,
   getProductVariantsForOrder,
   getStoreCartItemsForOrder,
   lockOrderRequest,
@@ -27,6 +29,7 @@ import { ProductVariant } from "../models/productVariant.model";
 import { formatMinorUnits, priceToMinorUnit } from "../utils/money";
 import { calculateShippingFee } from "../utils/calculateShipping";
 import { createProductVariantHistory } from "../repository/productVariantHistory.repository";
+import { withStoreAuthorizationTransaction } from "./storeAuthorization.service";
 
 const toOrderResponse = (order: Order) => {
   //we are using request hash internally only
@@ -364,4 +367,50 @@ export const createOrderService = async (currentUserId: string, orderInfo: Creat
     },
     { isolationLevel: "read committed" },
   );
+};
+
+export const getOrdersService = async (currentUserId: string, filters: FilterOrderInput) => {
+  return getOrders({ userId: currentUserId }, filters);
+};
+
+export const getOrderByIdService = async (currentUserId: string, orderId: string) => {
+  const orderFromDatabase = await findOrderById(orderId, { userId: currentUserId });
+
+  if (!orderFromDatabase) {
+    throw new NotFoundError("Order of the provided id not found!");
+  }
+
+  const items = await getOrderItems(orderFromDatabase.id);
+
+  return {
+    order: toOrderResponse(orderFromDatabase),
+    items,
+  };
+};
+
+export const getStoreOrdersService = async (
+  storeId: string,
+  filters: FilterOrderInput,
+  currentUserId: string,
+) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "store_orders:view", async (tx) => {
+    return getOrders({ storeId }, filters, tx);
+  });
+};
+
+export const getStoreOrderByIdService = async (storeId: string, orderId: string, currentUserId: string) => {
+  return withStoreAuthorizationTransaction(currentUserId, storeId, "store_orders:view", async (tx) => {
+    const orderFromDatabase = await findOrderById(orderId, { storeId }, tx);
+
+    if (!orderFromDatabase) {
+      throw new NotFoundError("Order not found in this store!");
+    }
+
+    const items = await getOrderItems(orderFromDatabase.id, tx);
+
+    return {
+      order: toOrderResponse(orderFromDatabase),
+      items,
+    };
+  });
 };

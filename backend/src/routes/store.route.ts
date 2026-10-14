@@ -40,6 +40,7 @@ import {
   updateProductVariantShippingFeeController,
   updateStoreShippingSettingsController,
 } from "../controller/shipping.controller";
+import { getStoreOrderByIdController, getStoreOrdersController } from "../controller/order.controller";
 
 const router = Router();
 
@@ -181,6 +182,20 @@ router.patch(
   authenticate,
   requirePermission("product_price:update"),
   updateProductVariantShippingFeeController,
+);
+
+router.get(
+  "/:storeId/orders",
+  authenticate,
+  requirePermission("store_orders:view"),
+  getStoreOrdersController,
+);
+
+router.get(
+  "/:storeId/orders/:orderId",
+  authenticate,
+  requirePermission("store_orders:view"),
+  getStoreOrderByIdController,
 );
 
 export default router;

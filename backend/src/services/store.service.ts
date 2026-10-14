@@ -1,6 +1,7 @@
 import { Permissions } from "../config/permissions";
 import db from "../db";
 import { findUserByEmail } from "../repository/auth.repository";
+import { hasStoreOrders } from "../repository/order.repository";
 import { hasPlatformRole } from "../repository/platformMember.repository";
 import { getGlobalOwnerRole } from "../repository/roles.repository";
 import {
@@ -194,12 +195,20 @@ export const updateStoreByIdService = async (storeId: string, storeInfo: UpdateS
   return updateStoreById(storeId, storeInfo);
 };
 
-//Todo:
+//Todo: ADDED the implementation
 //on a second thougth while scrolling, it has been a while since I returned back to this project
 //should we delete the store outright? There will be products, orders and members associated to
 //that store. By deleting the store, we are removing just the record of the table.
 export const deleteStoreByIdService = async (storeId: string, currentUserId: string) => {
   return withStoreAuthorizationTransaction(currentUserId, storeId, "store:remove", async (tx) => {
+    const storeHasOrders = await hasStoreOrders(tx, storeId);
+
+    if (storeHasOrders) {
+      throw new ConflictError(
+        "This store has orders and cannot be deleted permanently! You can deactivate it instead!",
+      );
+    }
+
     const deletedStore = await deleteStoreById(storeId, tx);
 
     if (!deletedStore) {
