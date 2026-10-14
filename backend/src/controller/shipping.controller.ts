@@ -13,7 +13,7 @@ import { updateProductVariantShippingFeeByIdService } from "../services/productV
  * @route                   /api/v1/stores/:storeId/shipping-settings
  * @method                  GET
  * @description             Get the shipping settings of a store
- * @access                  store:edit
+ * @access                  Public
  */
 export const getStoreShippingSettingsController = async (req: Request, res: Response, next: NextFunction) => {
   try {

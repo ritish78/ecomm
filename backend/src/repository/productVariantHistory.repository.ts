@@ -19,7 +19,7 @@ export type ProductVariantHistoryEditInfo =
       quantityChange: number;
       resultingStock: number;
       requestId: string;
-      reason: CreateProductVariantStockAdjustmentInput["reason"];
+      reason: CreateProductVariantStockAdjustmentInput["reason"] | "order";
       note?: string;
     };
 
