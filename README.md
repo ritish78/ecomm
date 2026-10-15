@@ -5,6 +5,6 @@
 - Also has role based access control.
 
 
-<img width="2495" height="1845" alt="ecomm_with_address" src="https://github.com/user-attachments/assets/fbdc8949-1df2-4aa5-a2f0-797f0ff26a85" />
+<img width="2495" height="1960" alt="ecomm_with_orders_table" src="https://github.com/user-attachments/assets/84c3c299-ecf7-42b0-929a-5fc10a6ce1e6" />
 
 
