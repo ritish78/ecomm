@@ -1,10 +1,9 @@
-import { CaretUpIcon, ChevronDownIcon, ExitIcon } from "@radix-ui/react-icons";
+import { ChevronDownIcon, ExitIcon } from "@radix-ui/react-icons";
 
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
   downArrow: ChevronDownIcon,
-  cart: CaretUpIcon,
   logout: ExitIcon,
   google: (props: IconProps) => (
     <svg
@@ -14,6 +13,7 @@ export const Icons = {
       width="24"
       height="24"
       viewBox="0 0 48 48"
+      // {...props}
     >
       <path
         fill="#FFC107"
@@ -62,6 +62,21 @@ export const Icons = {
         strokeLinecap="round"
         strokeLinejoin="round"
       ></path>
+    </svg>
+  ),
+  cart: (props: IconProps) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 1024 1024"
+      fill="none"
+      {...props}
+    >
+      <path
+        d="M432 928a48 48 0 1 1 0-96 48 48 0 0 1 0 96zm320 0a48 48 0 1 1 0-96 48 48 0 0 1 0 96zM96 128a32 32 0 0 1 0-64h160a32 32 0 0 1 31.36 25.728L320.64 256H928a32 32 0 0 1 31.296 38.72l-96 448A32 32 0 0 1 832 768H384a32 32 0 0 1-31.36-25.728L229.76 128H96zm314.24 576h395.904l82.304-384H333.44l76.8 384z"
+        fill="currentColor"
+      />
     </svg>
   ),
 };

@@ -11,12 +11,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary:
-    "bg-emerald-500 hover:bg-emerald-800 text-white focus:ring-emerald-500",
-  secondary:
-    "border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-emerald-500",
-  destructive:
-    "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:ring-red-500",
+  primary: "",
+  secondary: "brand-button-secondary",
+  destructive: "brand-button-destructive",
 };
 
 export default function Button({
@@ -30,9 +27,10 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      disabled={disabled || isLoading}
-      className={`w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium py-2.5 transition-colors duration-150 hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${VARIANT_CLASSES[variant]} ${className}`}
       {...rest}
+      disabled={disabled || isLoading}
+      aria-busy={isLoading}
+      className={`brand-button w-full text-sm ${VARIANT_CLASSES[variant]} ${className}`}
     >
       {isLoading ? (loadingText ?? "Loading...") : children}
     </button>

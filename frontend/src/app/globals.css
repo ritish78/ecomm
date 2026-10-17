@@ -1,26 +1,548 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fffcf5;
+  --foreground: #701634;
+
+  --brand: #701634;
+  --brand-dark: #501025;
+  --brand-blue: #d9edf5;
+  --brand-coral: #f4917e;
+  --brand-muted: #795b65;
+  --brand-border: #dcc8cc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-fredoka);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+summary {
+  font: inherit;
+}
+
+button,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+summary {
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--brand-coral);
+  outline-offset: 4px;
+}
+
+::selection {
+  background: var(--brand-coral);
+  color: var(--brand-dark);
+}
+
+/* the display font is used for our brand and headings */
+.brand-heading {
+  font-family: var(--font-fredoka), sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+/* the same tile pattern can be reused on our home page */
+.brand-tiles {
+  background-color: var(--brand-blue);
+  background-image:
+    linear-gradient(to right, #ffffff80 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff80 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.brand-flower {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  color: var(--brand);
+}
+
+.brand-flower span {
+  background: currentColor;
+  border-radius: 2px 9px 2px 9px;
+}
+
+.brand-flower span:nth-child(2),
+.brand-flower span:nth-child(3) {
+  border-radius: 9px 2px 9px 2px;
+}
+
+.brand-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--brand);
+  border-radius: 12px;
+  padding: 12px 20px;
+  background: var(--brand);
+  color: var(--background);
+  font-weight: 600;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.brand-button:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.brand-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.brand-button-secondary {
+  background: white;
+  color: var(--brand);
+}
+
+.brand-button-secondary:hover:not(:disabled) {
+  background: var(--brand-blue);
+}
+
+.brand-button-destructive {
+  border-color: transparent;
+  background: transparent;
+  color: #a32135;
+}
+
+.brand-button-destructive:hover:not(:disabled) {
+  background: #fff0ed;
+}
+
+.brand-input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: white;
+  color: var(--brand);
+}
+
+.brand-input::placeholder {
+  color: #947d84;
+}
+
+.brand-input:focus {
+  border-color: var(--brand);
+}
+
+/* the header uses the same double border as the reference */
+.store-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--background);
+}
+
+.store-header-top {
+  background: var(--brand);
+  color: var(--background);
+}
+
+.store-header-inner {
+  display: flex;
+  max-width: 1280px;
+  min-height: 88px;
+  margin-inline: auto;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+}
+
+.store-logo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.store-logo-name {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.store-logo-caption {
+  max-width: 110px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.store-search {
+  display: flex;
+  min-width: 0;
+  max-width: 560px;
+  min-height: 46px;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  margin-inline: auto;
+  border-radius: 14px;
+  padding: 10px 16px;
+  background: var(--background);
+  color: var(--brand-muted);
+}
+
+.store-search input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  font-size: 13px;
+}
+
+.store-search input:disabled {
+  opacity: 1;
+}
+
+.store-header-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.store-account-trigger {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.store-header-bottom {
+  border-top: 4px double var(--brand);
+  border-bottom: 4px double var(--brand);
+}
+
+.store-header-bottom-inner {
+  display: flex;
+  max-width: 1280px;
+  min-height: 52px;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 24px;
+}
+
+.store-main-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.store-nav-group {
+  position: relative;
+}
+
+.store-nav-trigger {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.store-nav-group[open] > .store-nav-trigger,
+.store-nav-trigger:hover {
+  background: var(--brand-blue);
+}
+
+.store-nav-group[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.store-nav-panel,
+.store-account-panel {
+  position: absolute;
+  top: 100%;
+  z-index: 60;
+  width: 288px;
+  border: 1px solid var(--brand);
+  border-top: 4px solid var(--brand);
+  border-radius: 0 0 16px 16px;
+  padding: 8px;
+  background: var(--background);
+  color: var(--brand);
+  box-shadow: 0 16px 28px #50102514;
+}
+
+.store-nav-panel {
+  left: 0;
+}
+
+.store-nav-group:last-child .store-nav-panel {
+  right: 0;
+  left: auto;
+}
+
+.store-account-panel {
+  right: 0;
+}
+
+.store-nav-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.store-nav-link:hover,
+.store-nav-link[aria-current="page"] {
+  background: var(--brand-blue);
+}
+
+.store-nav-description {
+  color: var(--brand-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.store-mobile-nav {
+  display: none;
+}
+
+/* the login card sits inside the same blue tile pattern */
+.login-page {
+  padding: 48px 24px 64px;
+}
+
+.login-shell {
+  display: grid;
+  max-width: 1080px;
+  margin-inline: auto;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 2px solid var(--brand);
+  border-radius: 32px;
+}
+
+.login-story {
+  position: relative;
+  display: flex;
+  min-height: 600px;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-right: 2px solid var(--brand);
+  padding: 44px;
+}
+
+.login-story::after {
+  position: absolute;
+  right: -90px;
+  bottom: -125px;
+  width: 370px;
+  height: 370px;
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.login-story-title {
+  max-width: 360px;
+  margin-top: 28px;
+  font-size: clamp(44px, 5vw, 68px);
+}
+
+.login-story-caption {
+  max-width: 290px;
+  margin-top: 22px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.login-story-label {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  margin-top: 40px;
+  border: 1px solid var(--brand);
+  border-radius: 50% 50% 12px 12px;
+  padding: 22px 28px;
+  background: var(--background);
+  text-align: center;
+}
+
+.login-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px;
+  background: var(--background);
+}
+
+.login-shelf {
+  max-width: 1080px;
+  margin: 20px auto 0;
+  border-top: 4px double var(--brand);
+  border-bottom: 4px double var(--brand);
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+@media (max-width: 1023px) {
+  .store-header-inner {
+    min-height: 76px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .store-logo-name {
+    font-size: 38px;
+  }
+
+  .store-search {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .store-header-bottom {
+    display: none;
+  }
+
+  .store-mobile-nav {
+    display: block;
+    border-bottom: 4px double var(--brand);
+    background: var(--background);
+  }
+
+  .store-mobile-nav > summary {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .store-mobile-panel {
+    max-height: 60dvh;
+    overflow-y: auto;
+    border-top: 1px solid var(--brand-border);
+    padding: 8px 16px 16px;
+  }
+
+  .store-mobile-panel .store-nav-panel {
+    position: static;
+    width: 100%;
+    border: 0;
+    border-left: 2px solid var(--brand);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .store-mobile-panel .store-nav-trigger {
+    justify-content: space-between;
+  }
+
+  .login-panel,
+  .login-story {
+    padding: 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  .store-logo-caption {
+    display: none;
+  }
+
+  .store-header-actions {
+    gap: 8px;
+  }
+
+  .login-page {
+    padding: 24px 16px 40px;
+  }
+
+  .login-shell {
+    grid-template-columns: 1fr;
+    border-radius: 24px;
+  }
+
+  .login-story {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 2px solid var(--brand);
+    padding: 28px;
+  }
+
+  .login-story-title {
+    max-width: 320px;
+    margin-top: 18px;
+    font-size: 44px;
+  }
+
+  .login-story-caption {
+    margin-top: 14px;
+  }
+
+  .login-story-label {
+    display: none;
+  }
+
+  .login-panel {
+    padding: 32px 24px;
+  }
+
+  .login-shelf {
+    line-height: 2;
+    letter-spacing: 0.12em;
+  }
 }

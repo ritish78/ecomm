@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fredoka, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthRestorer from "@/components/AuthRestorer";
 import SiteHeader from "@/components/layout/SiteHeader";
@@ -14,6 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+
 export const metadata: Metadata = {
   title: "Ecomm",
   description: "Ecomm website",
@@ -27,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fredoka.variable} h-full antialiased`}
     >
       {/* I am using GSI widget to sign in. It sometimes throws this error
       [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token.
