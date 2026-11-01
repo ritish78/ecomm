@@ -26,7 +26,7 @@ export default function LoginPage() {
 
             <p className="login-story-caption">
               From the rice in your cupboard to your favourite bowl of noodles.
-              Good things belong in your basket.
+              Good things from home.
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
               Your next
             </p>
 
-            <p className="brand-heading mt-2 text-3xl">pantry refill</p>
+            <p className="brand-heading mt-2 text-3xl">cupboard refill</p>
 
             <p className="mt-2 text-xs">starts here.</p>
           </div>

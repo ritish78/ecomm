@@ -113,7 +113,7 @@ export default function LoginForm() {
         >
           Log in
           <ArrowRightIcon
-            className="ml-1 size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+            className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
             aria-hidden="true"
           />
         </Button>
