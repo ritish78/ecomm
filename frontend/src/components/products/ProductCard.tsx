@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icons } from "../ui/Icons";
+import Link from "next/link";
 
 export type ProductSummary = {
   id: string;
@@ -55,30 +56,44 @@ export default function ProductCard({ product, currency }: Props) {
 
   return (
     <article className="home-product-card">
-      <div className="home-product-image">
-        {showImage ? (
-          //Product images come from the backend's configured image URLs.
-          //eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt={product.primaryImage?.altText || product.name}
-            width={320}
-            height={240}
-            loading="lazy"
-            onError={() => setFailedImageUrl(imageUrl)}
-          />
-        ) : (
-          <div className="home-image-placeholder">
-            <Icons.cart className="h-10 w-10" aria-hidden="true" />
-            <span>Image coming soon</span>
-          </div>
-        )}
-      </div>
+      <Link
+        href={`/product/${encodeURIComponent(product.slug)}`}
+        className="block"
+        aria-label={`View ${product.name}`}
+      >
+        <div className="home-product-image">
+          {showImage ? (
+            //Product images come from the backend's configured image URLs.
+            //eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={product.primaryImage?.altText || product.name}
+              width={320}
+              height={240}
+              loading="lazy"
+              onError={() => setFailedImageUrl(imageUrl)}
+            />
+          ) : (
+            <div className="home-image-placeholder">
+              <Icons.cart className="h-10 w-10" aria-hidden="true" />
+              <span>Image coming soon</span>
+            </div>
+          )}
+        </div>
+      </Link>
 
       <div className="home-product-content">
+        {/* TODO: Search product by the brand name as well when the user clicks on the brand name */}
         <p className="home-eyebrow">{product.brand.name}</p>
 
-        <h3 className="home-product-name">{product.name}</h3>
+        <h3 className="home-product-name">
+          <Link
+            href={`/product/${encodeURIComponent(product.slug)}`}
+            className="home-product-link"
+          >
+            {product.name}
+          </Link>
+        </h3>
 
         <p className="home-product-category">{product.category.name}</p>
 
