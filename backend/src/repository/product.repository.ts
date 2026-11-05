@@ -149,6 +149,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
       isActive: products.isActive,
       createdAt: products.createdAt,
       updatedAt: products.updatedAt,
+      storeId: storeProducts.storeId,
       brand: {
         id: brands.id,
         name: brands.name,
@@ -160,6 +161,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
       },
     })
     .from(products)
+    .innerJoin(storeProducts, eq(storeProducts.productId, products.id))
     .innerJoin(brands, eq(products.brandId, brands.id))
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .where(isIdentifierUuid ? eq(products.id, productIdentifier) : eq(products.slug, productIdentifier));
