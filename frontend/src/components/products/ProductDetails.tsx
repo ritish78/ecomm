@@ -159,9 +159,9 @@ export default function ProductDetails({ product, currency }: Props) {
       }
 
       setMessage(
-        `Saved to your cart: ${requestedQuantity} × ${Number(
+        `Saved to your cart: ${requestedQuantity} x ${Number(
           selectedVariant.weight
-        )} ${selectedVariant.unit}.`
+        )} ${selectedVariant.unit} of ${product.name}.`
       );
     } catch {
       setError("Could not connect to the server. Please try again.");
