@@ -10,7 +10,7 @@ import {
 } from "../repository/auth.repository";
 import { RefreshToken } from "../types/refreshTokens.type";
 import { UserDTO } from "../types/user.types";
-import { AuthError, ConflictError, NotFoundError } from "../utils/error";
+import { AuthError, ConflictError } from "../utils/error";
 import { exchangeGoogleCode } from "../utils/google";
 import hashPassword, { passwordMatches } from "../utils/hashPassword";
 import { generateAccessToken, generateJWT, verifyRefreshToken } from "../utils/jwt";
@@ -190,6 +190,11 @@ export const loginWithGoogleService = async (code: string) => {
     const userFromEmail = await findUserByEmail(userFromGoogle.email);
 
     if (userFromEmail) {
+      //we should not link a google account if the existing account is inactive
+      if (!userFromEmail.active) {
+        throw new AuthError("Your account is inactive! Please contact support!");
+      }
+
       userFromDatabase = await linkGoogleId(
         userFromEmail.id,
         userFromGoogle.googleId,
@@ -210,6 +215,10 @@ export const loginWithGoogleService = async (code: string) => {
     }
   }
 
+  //we also check accounts that were already registered using google
+  if (!userFromDatabase.active) {
+    throw new AuthError("Your account is inactive! Please contact support!");
+  }
   const tokens = generateJWT(userFromDatabase.id, userFromDatabase.firstName);
 
   await insertRefreshToken(userFromDatabase.id, tokens.refreshToken);
@@ -218,7 +227,7 @@ export const loginWithGoogleService = async (code: string) => {
     ...tokens,
     user: toUserDTO(userFromDatabase),
   };
-};
+};;;
 
 /**
  * @param {string} userId - id of the user to get the details
@@ -228,8 +237,17 @@ export const getCurrentUserService = async (userId: string): Promise<UserDTO> =>
   const userFromDatabase = await findUserById(userId);
 
   if (!userFromDatabase) {
-    throw new NotFoundError("User of the provided access token not found!");
+    //Changed to AuthError from NotFoundError
+    throw new AuthError("User of the provided access token not found!");
+  }
+
+  if (!userFromDatabase.active) {
+    throw new AuthError("Your account is inactive! Please contact support!");
+  }
+
+  if (!userFromDatabase.emailVerified) {
+    throw new AuthError("You need to verify your email before logging in!");
   }
 
   return toUserDTO(userFromDatabase);
-}
+};
