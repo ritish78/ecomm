@@ -11,6 +11,10 @@ export default function proxy(request: NextRequest) {
     (pathname.startsWith("/login") || pathname.startsWith("/register")) &&
     userHasToken
   ) {
+    //TODO:
+    //in this redirect, if a user is logged in and but is deleted from the server,
+    //then the user will still be redirected to the home page but the user will be logged out
+    //the user won't be able to access the login or register page until their token expires
     return NextResponse.redirect(new URL("/", request.url));
   }
 

@@ -52,11 +52,13 @@ export function AuthNav() {
           e.currentTarget.querySelector("summary")?.focus();
         }
       }}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) {
-          e.currentTarget.open = false;
-        }
-      }}
+      // The OnBlur was causing chrome to crash when clicking on the user name or user email
+      // So, I have commented it out for now. The error does not occur in Firefox.
+      // onBlur={(e) => {
+      //   if (!e.currentTarget.contains(e.relatedTarget)) {
+      //     e.currentTarget.open = false;
+      //   }
+      // }}
     >
       <summary
         className="store-account-trigger"

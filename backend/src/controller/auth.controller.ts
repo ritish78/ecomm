@@ -125,6 +125,11 @@ export const refreshAccessTokenController = async (req: Request, res: Response, 
 
     res.status(200).send({ message: "Access token token refreshed!", user });
   } catch (error) {
+    //clearing the cookies if the refresh token that is provided by the user is invalid or expired
+    if (error instanceof AuthError) {
+      res.clearCookie("accessToken", ACCESS_TOKEN_COOKIE_OPTIONS);
+      res.clearCookie("refreshToken", REFRESH_TOKEN_COOKIE_OPTIONS);
+    }
     next(error);
   }
 };

@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { ArrowRightIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  MagnifyingGlassIcon,
+} from "@radix-ui/react-icons";
 
 import BrandFlower from "@/components/ui/BrandFlower";
 import ProductCard, {
@@ -289,8 +293,12 @@ export default async function Home({ searchParams }: Props) {
                 {page > 1 && (
                   <Link
                     href={getProductsHref(keyword, page - 1)}
-                    className="brand-button brand-button-secondary"
+                    className="brand-button brand-button-secondary tracking-wide group"
                   >
+                    <ArrowLeftIcon
+                      aria-hidden="true"
+                      className="transition-transform group-hover:-translate-x-1 motion-reduce:transform-none"
+                    />
                     Previous
                   </Link>
                 )}
@@ -302,10 +310,13 @@ export default async function Home({ searchParams }: Props) {
                 {page < products.totalPages && (
                   <Link
                     href={getProductsHref(keyword, page + 1)}
-                    className="brand-button brand-button-secondary"
+                    className="brand-button brand-button-secondary tracking-wide group"
                   >
                     Next
-                    <ArrowRightIcon aria-hidden="true" />
+                    <ArrowRightIcon
+                      aria-hidden="true"
+                      className="transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+                    />
                   </Link>
                 )}
               </nav>
