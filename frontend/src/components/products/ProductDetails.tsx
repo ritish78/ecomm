@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import Button from "@/components/ui/Button";
 import { Icons } from "../ui/Icons";
+import { apiFetch } from "@/lib/api";
 
 type ProductVariant = {
   id: string;
@@ -116,30 +117,26 @@ export default function ProductDetails({ product, currency }: Props) {
       return;
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+    //
+    // const baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-    if (!baseUrl) {
-      setError("We couldn't connect to the store. Please try again later.");
-      return;
-    }
+    // if (!baseUrl) {
+    //   setError("We couldn't connect to the store. Please try again later.");
+    //   return;
+    // }
 
     submittingRef.current = true;
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${baseUrl.replace(/\/+$/, "")}/api/v1/cart/items`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            storeId: product.storeId,
-            variantId: selectedVariant.id,
-            quantity: requestedQuantity,
-          }),
-        }
-      );
+      const response = await apiFetch("/api/v1/cart/items", {
+        method: "PUT",
+        body: JSON.stringify({
+          storeId: product.storeId,
+          variantId: selectedVariant.id,
+          quantity: requestedQuantity,
+        }),
+      });
 
       if (response.status === 401) {
         setNeedsLogin(true);

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } from "../config";
+import { AuthError } from "./error";
 
 /**
  * @param {string} userId - id of the user who is logged in
@@ -49,7 +50,22 @@ export const generateJWT = (userId: string, firstName: string) => {
  * @returns {object} - user object with id and firstName
  */
 export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, JWT_ACCESS_SECRET) as { user: { id: string; firstName: string } };
+  try {
+    return jwt.verify(token, JWT_ACCESS_SECRET) as {
+      user: {
+        id: string;
+        firstName: string;
+      };
+    };
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.NotBeforeError) {
+      throw new AuthError(
+        "Your session has expired or your session is invalid! Please log in again to continue!",
+      );
+    }
+
+    throw error;
+  }
 };
 
 /**
