@@ -89,18 +89,24 @@ export const registerController = async (req: Request, res: Response, next: Next
  */
 export const logoutController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    //Clear the access and refresh tokens from cookies
+    res.clearCookie("accessToken", ACCESS_TOKEN_COOKIE_OPTIONS);
+    res.clearCookie("refreshToken", ACCESS_TOKEN_COOKIE_OPTIONS);
+
     const refreshToken = req.cookies?.refreshToken;
 
     if (refreshToken) {
       await revokeRefreshTokenService(refreshToken);
     }
 
-    //Clear the access and refresh tokens from cookies
-    res.clearCookie("accessToken", ACCESS_TOKEN_COOKIE_OPTIONS);
-    res.clearCookie("refreshToken", ACCESS_TOKEN_COOKIE_OPTIONS);
-
     return res.status(200).send({ message: "Logout successful!" });
   } catch (error) {
+    //if the refresh token is invalid or expired, the user is already logged out
+    if (error instanceof AuthError) {
+      return res.status(200).send({ message: "Logout successful!" });
+    }
+
+    //we still report database errors, but the cookies will be cleared in the response
     next(error);
   }
 };

@@ -110,9 +110,15 @@ export default function RegisterForm() {
           </p>
         </div>
 
-        <Link href="/login" className="brand-button mt-6 w-full text-sm">
+        <Link
+          href="/login"
+          className="brand-button mt-6 w-full text-sm tracking-wide group"
+        >
           Continue to login
-          <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
+          <ArrowRightIcon
+            className="h-5 w-5 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+            aria-hidden="true"
+          />
         </Link>
       </div>
     );
