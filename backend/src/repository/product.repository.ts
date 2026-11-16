@@ -11,6 +11,7 @@ import toOrQuery from "../utils/toOrQuery";
 import { StoreProducts, storeProducts } from "../models/storeProducts.model";
 import { AddProductVariantInput, UpdateProductVariantInput } from "../schema/productVariants.schema";
 import { randomUUID } from "node:crypto";
+import { stores } from "../models/store.model";
 
 /**
  * @param {string} productId - id of the product to get
@@ -150,6 +151,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
       createdAt: products.createdAt,
       updatedAt: products.updatedAt,
       storeId: storeProducts.storeId,
+      storeIsActive: stores.isActive, //to check if the store is active or not in the products page
       brand: {
         id: brands.id,
         name: brands.name,
@@ -162,6 +164,7 @@ export const findProductWithDetailsByIdOrSlug = async (productIdentifier: string
     })
     .from(products)
     .innerJoin(storeProducts, eq(storeProducts.productId, products.id))
+    .innerJoin(stores, eq(storeProducts.storeId, stores.id))
     .innerJoin(brands, eq(products.brandId, brands.id))
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .where(isIdentifierUuid ? eq(products.id, productIdentifier) : eq(products.slug, productIdentifier));

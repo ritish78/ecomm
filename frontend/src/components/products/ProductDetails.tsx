@@ -21,6 +21,7 @@ type ProductVariant = {
 export type ProductDetailsData = {
   id: string;
   storeId: string;
+  storeIsActive: boolean;
   name: string;
   slug: string;
   description: string | null;
@@ -78,6 +79,7 @@ export default function ProductDetails({ product, currency }: Props) {
   );
 
   const available =
+    product.storeIsActive &&
     product.isActive &&
     selectedVariant !== undefined &&
     canPurchase(selectedVariant);
@@ -264,9 +266,11 @@ export default function ProductDetails({ product, currency }: Props) {
         )}
 
         <p className="product-stock" aria-live="polite">
-          {available
-            ? `${selectedVariant.stock} in stock`
-            : "This pack is currently unavailable."}
+          {!product.storeIsActive
+            ? "This store is currently not accepting orders."
+            : available
+              ? `${selectedVariant.stock} in stock`
+              : "This pack is currently unavailable."}
         </p>
 
         <div className="product-purchase-row">
