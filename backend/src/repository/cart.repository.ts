@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import db, { Tx } from "../db";
 import { carts } from "../models/cart.model";
 import { stores } from "../models/store.model";
@@ -6,6 +6,7 @@ import { products } from "../models/products.model";
 import { productVariants } from "../models/productVariant.model";
 import { storeProducts } from "../models/storeProducts.model";
 import { cartItems } from "../models/cartItem.model";
+import { productImages } from "../models/productImages.model";
 
 export const findCartByUserId = async (userId: string, tx?: Tx) => {
   const database = tx ? tx : db;
@@ -107,6 +108,23 @@ export const getCartItemsWithDetails = async (cartId: string, tx?: Tx) => {
       variantId: cartItems.productVariantId,
       quantity: cartItems.quantity,
       storeProductId: storeProducts.id,
+      //we select one image so that multiple images do not repeat the cart item
+      primaryImage: sql<{
+        imageUrl: string;
+        altText: string | null;
+      } | null>`(
+            SELECT json_build_object(
+              'imageUrl', ${productImages.imageUrl},
+              'altText', ${productImages.altText}
+            )
+            FROM ${productImages}
+            WHERE ${productImages.productId} = ${products.id}
+            ORDER BY
+              ${productImages.isPrimary} DESC,
+              ${productImages.displayOrder} ASC,
+              ${productImages.id} ASC
+            LIMIT 1
+          )`,
       store: {
         id: stores.id,
         name: stores.name,

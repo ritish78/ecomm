@@ -316,7 +316,12 @@ export default function ProductDetails({ product, currency }: Props) {
             <p>{error}</p>
 
             {needsLogin && (
-              <Link href="/login" className="mt-2 inline-block underline">
+              <Link
+                href={`/login?redirect=${encodeURIComponent(
+                  `/product/${encodeURIComponent(product.slug)}`
+                )}`}
+                className="mt-2 inline-block underline"
+              >
                 Log in
               </Link>
             )}

@@ -48,7 +48,33 @@ export default function LoginForm() {
 
       const data = await res.json();
       setAuth(data.user, "");
-      router.replace("/");
+
+      //we only redirect to a page within our own website
+      const redirect = new URLSearchParams(window.location.search).get(
+        "redirect"
+      );
+      let redirectTo = "/";
+
+      if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
+        try {
+          const redirectUrl = new URL(redirect, window.location.origin);
+
+          if (
+            redirectUrl.origin === window.location.origin &&
+            redirectUrl.pathname !== "/login" &&
+            !redirectUrl.pathname.startsWith("/login/") &&
+            redirectUrl.pathname !== "/register" &&
+            !redirectUrl.pathname.startsWith("/register/")
+          ) {
+            redirectTo =
+              redirectUrl.pathname + redirectUrl.search + redirectUrl.hash;
+          }
+        } catch {
+          //if the redirect is invalid, we then use the home page
+        }
+      }
+
+      router.replace(redirectTo);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Please try again!";

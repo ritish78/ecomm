@@ -86,6 +86,7 @@ export const getCartService = async (currentUserId: string) => {
       quantity: row.quantity,
       store: row.store,
       product: row.product,
+      primaryImage: row.primaryImage,
       variant: row.variant,
       unitPrice,
       lineTotal,
