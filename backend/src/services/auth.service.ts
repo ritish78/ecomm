@@ -200,9 +200,9 @@ export const loginWithGoogleService = async (code: string) => {
         throw new ConflictError("This email is already linked to another Google account!");
       }
 
-      if (userFromEmail.password && !userFromEmail.emailVerified) {
-        throw new AuthError("Please verify your existing account before linking it to Google!");
-      }
+      // if (userFromEmail.password && !userFromEmail.emailVerified) {
+      //   throw new AuthError("Please verify your existing account before linking it to Google!");
+      // }
 
       //we should not link a google account if the existing account is inactive
       if (!userFromEmail.active) {
