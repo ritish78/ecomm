@@ -330,7 +330,7 @@ function CartContent({ currency }: Props) {
                   <span>Available items subtotal</span>
 
                   <strong className="text-right wrap-anywhere">
-                    {priceFormatter.format(Number(store.purchaseableTotal))}
+                    {priceFormatter.format(Number(store.purchaseableSubtotal))}
                   </strong>
                 </div>
               </section>
@@ -379,7 +379,7 @@ function CartContent({ currency }: Props) {
                 included.
               </p>
 
-              {!cart.readyForCheckOut && (
+              {!cart.readyForCheckout && (
                 <p className="mt-4.5 rounded-xl border border-(--brand-border) bg-[#fff0ed] p-3.5 text-[13px] leading-[1.6] text-[#a32135] wrap-anywhere">
                   Some items need your attention. Update their quantities or
                   remove unavailable items before checkout.

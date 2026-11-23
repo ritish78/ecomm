@@ -45,8 +45,8 @@ export type CartDetailsData = {
     storeId: string;
     store: CartStore | null;
     items: CartItem[];
-    purchaseableTotal: string;
+    purchaseableSubtotal: string;
   }[];
   purchaseableSubtotal: string;
-  readyForCheckOut: boolean;
+  readyForCheckout: boolean;
 };
