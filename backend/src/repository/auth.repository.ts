@@ -70,6 +70,7 @@ export const linkGoogleAccountToExistingUser = async (
 ): Promise<User> => {
   const [updatedUser] = await db
     .update(users)
+    // .set({ googleId, avatarUrl, emailVerified: true, updatedAt: new Date() })
     .set({ googleId, avatarUrl, updatedAt: new Date() })
     .where(eq(users.id, userId))
     .returning();
@@ -128,4 +129,20 @@ export const linkGoogleId = async (userId: string, googleId: string, email: stri
     .returning();
 
   return linkedUser;
+};
+
+export const verifyGoogleUserEmail = async (userId: string, googleId: string, email: string) => {
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(users.id, userId), eq(users.googleId, googleId), eq(users.email, email), eq(users.active, true)),
+    )
+    .returning();
+
+  return updatedUser;
 };

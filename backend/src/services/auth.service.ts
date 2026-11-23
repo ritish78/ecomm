@@ -7,6 +7,7 @@ import {
   insertRefreshToken,
   linkGoogleId,
   revokeRefreshToken,
+  verifyGoogleUserEmail,
 } from "../repository/auth.repository";
 import { RefreshToken } from "../types/refreshTokens.type";
 import { UserDTO } from "../types/user.types";
@@ -186,10 +187,23 @@ export const loginWithGoogleService = async (code: string) => {
 
   //If the user has not created account and has clicked on Login using Google button
   if (!userFromDatabase) {
+    //before creating or linking an account, we check that google verified the email
+    if (!userFromGoogle.emailVerified) {
+      throw new AuthError("Google could not verify this email address!");
+    }
+
     //first, we check if the user of the provided email exists in our database.
     const userFromEmail = await findUserByEmail(userFromGoogle.email);
 
     if (userFromEmail) {
+      if (userFromEmail.googleId && userFromEmail.googleId !== userFromGoogle.googleId) {
+        throw new ConflictError("This email is already linked to another Google account!");
+      }
+
+      if (userFromEmail.password && !userFromEmail.emailVerified) {
+        throw new AuthError("Please verify your existing account before linking it to Google!");
+      }
+
       //we should not link a google account if the existing account is inactive
       if (!userFromEmail.active) {
         throw new AuthError("Your account is inactive! Please contact support!");
@@ -219,6 +233,26 @@ export const loginWithGoogleService = async (code: string) => {
   if (!userFromDatabase.active) {
     throw new AuthError("Your account is inactive! Please contact support!");
   }
+
+  //older google accounts might still have emailVerified set to false
+  if (!userFromDatabase.emailVerified) {
+    if (!userFromGoogle.emailVerified) {
+      throw new AuthError("Please verify your email before logging in!");
+    }
+
+    const verifiedUser = await verifyGoogleUserEmail(
+      userFromDatabase.id,
+      userFromGoogle.googleId,
+      userFromGoogle.email,
+    );
+
+    if (!verifiedUser) {
+      throw new AuthError("Could not verify the email linked to this account!");
+    }
+
+    userFromDatabase = verifiedUser;
+  }
+
   const tokens = generateJWT(userFromDatabase.id, userFromDatabase.firstName);
 
   await insertRefreshToken(userFromDatabase.id, tokens.refreshToken);
@@ -227,7 +261,7 @@ export const loginWithGoogleService = async (code: string) => {
     ...tokens,
     user: toUserDTO(userFromDatabase),
   };
-};;;
+};;;;;;
 
 /**
  * @param {string} userId - id of the user to get the details

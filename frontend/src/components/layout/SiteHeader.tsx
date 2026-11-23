@@ -52,15 +52,14 @@ export default function SiteHeader() {
             <AuthNav />
 
             {/* the cart page will be connected with the shopping flow */}
-            <button
-              type="button"
-              disabled
-              title="Cart page coming soon"
-              className="flex min-h-11 items-center gap-2 border-l border-white/30 pl-4 text-sm opacity-60"
+            <Link
+              href="/cart"
+              aria-label="View your cart"
+              className="flex min-h-11 items-center gap-2 border-l border-white/30 pl-4 text-sm"
             >
               <Icons.cart className="h-6 w-6" aria-hidden="true" />
               <span className="hidden sm:inline">Cart</span>
-            </button>
+            </Link>
           </div>
         </div>
       </div>

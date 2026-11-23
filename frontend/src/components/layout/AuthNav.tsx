@@ -11,7 +11,7 @@ import Button from "../ui/Button";
 export function AuthNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, isRestoring } = useAuthStore();
 
   const getInitials = (firstName: string, lastName: string) =>
     `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -30,6 +30,19 @@ export function AuthNav() {
       router.push("/login");
     }
   };
+
+  //i was logging in using gmail during testing and the login was successful
+  //but on page refresh, the user was logged out. I found out that it was
+  //because the email was not verified. I will need to make when user logs in
+  //using their gmail account, their email is verified automatically.
+  //we wait for the saved session before showing the login link
+  // if (isRestoring) {
+  //   return (
+  //     <span className="store-account-trigger" role="status">
+  //       <PersonIcon className="h-5 w-5" aria-hidden="true" />
+  //     </span>
+  //   );
+  // }
 
   if (!user) {
     return (

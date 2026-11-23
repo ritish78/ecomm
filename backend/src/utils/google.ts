@@ -22,9 +22,14 @@ export async function exchangeGoogleCode(code: string) {
 
   const payload = ticket.getPayload();
 
-  if (!payload) {
+  if (!payload || !payload.email) {
     throw new AuthError("Invalid Google Token provided!");
   }
+
+  //we can verfiy the email directly if google manages the account
+  const googleManagesEmail = payload.email?.toLowerCase().endsWith("@gmail.com") || Boolean(payload.hd);
+
+  const canVerifyEmail = googleManagesEmail && payload.email_verified === true;
 
   return {
     googleId: payload.sub,
@@ -33,5 +38,6 @@ export async function exchangeGoogleCode(code: string) {
     lastName: payload.family_name ?? "",
     avatarUrl: payload.picture,
     //for email verified, we will set it as true as the user is logged in using google
+    emailVerified: canVerifyEmail,
   };
 }
