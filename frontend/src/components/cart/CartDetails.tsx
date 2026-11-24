@@ -9,6 +9,7 @@ import Button from "../ui/Button";
 import { Icons } from "../ui/Icons";
 import Link from "next/link";
 import CartItemCard from "./CartItemCard";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 type Props = {
   currency: string;
@@ -405,14 +406,18 @@ function CartContent({ currency }: Props) {
 
               <Link
                 href="/"
-                className="mt-5.5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-(--brand) bg-(--brand) px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-(--brand-dark)"
+                className="mt-5.5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-(--brand) bg-(--brand) px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-(--brand-dark) tracking-wide group gap-2"
               >
                 Continue shopping
+                <ArrowRightIcon
+                  className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+                  aria-hidden="true"
+                />
               </Link>
 
-              <p className="mt-3 text-center text-xs text-(--brand-muted)">
+              {/* <p className="mt-3 text-center text-xs text-(--brand-muted)">
                 Checkout is coming next.
-              </p>
+              </p> */}
 
               {confirmClear ? (
                 <div className="mt-5 grid gap-2.5 border-t border-(--brand-border) pt-5 text-[13px] leading-[1.6]">
