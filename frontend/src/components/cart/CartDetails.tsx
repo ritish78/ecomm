@@ -333,6 +333,19 @@ function CartContent({ currency }: Props) {
                     {priceFormatter.format(Number(store.purchaseableSubtotal))}
                   </strong>
                 </div>
+
+                {!isSubmitting &&
+                  store.items.length > 0 &&
+                  store.items.every((item) => item.purchaseable) && (
+                    <div className="px-4 pb-5 min-[601px]:px-5.5">
+                      <Link
+                        href={`/checkout/${store.storeId}`}
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl bg-(--brand) px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-(--brand-dark)"
+                      >
+                        Checkout from {store.store?.name ?? "this store"}
+                      </Link>
+                    </div>
+                  )}
               </section>
             ))}
           </div>
