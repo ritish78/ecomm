@@ -7,6 +7,7 @@ import AddressForm, { type DeliveryAddress } from "./AddressForm";
 import Button from "@/components/ui/Button";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 type Props = {
   storeId: string;
@@ -449,8 +450,13 @@ function CheckoutContent({
               type="button"
               disabled={isSubmitting || !selectedAddressId || showAddressForm}
               onClick={placeOrder}
+              className="tracking-wide group"
             >
               Place order
+              <ArrowRightIcon
+                className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
+                aria-hidden="true"
+              />
             </Button>
           </div>
         </div>

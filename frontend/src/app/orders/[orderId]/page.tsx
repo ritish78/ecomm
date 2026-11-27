@@ -1,3 +1,4 @@
+import OrderConfirmation from "@/components/orders/OrderConfirmation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,9 +13,9 @@ export default async function OrderPage({ params }: Props) {
   const { orderId } = await params;
 
   return (
-    <h1>
-      Order confirmation page for {orderId}. Will implement order confirmation
-      component.
-    </h1>
+    <OrderConfirmation
+      orderId={orderId}
+      currency={process.env.STOREFRONT_CURRENCY || "AUD"}
+    />
   );
 }
